@@ -32,7 +32,7 @@ public class Message {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    MessageStatus read;
+    MessageStatus status;
 
     @Column(nullable = false)
     Long recipientId;

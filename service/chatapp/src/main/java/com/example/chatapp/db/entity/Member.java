@@ -4,30 +4,26 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
 @Entity
-@Table(name = "groups")
+@Table(name = "members")
 @Data
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Group {
+public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true)
     Long id;
 
     @Column(nullable = false)
-    String name;
+    @Enumerated(EnumType.STRING)
+    GroupRoleType groupRoleType;
 
-    @OneToMany(mappedBy = "group")
-    List<Member> members;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    AppUser user;
 
-    public void addMember(Member member){
-        members.add(member);
-    }
-
-    public void removeMember(Member member){
-       members.remove(member);
-    }
+    @ManyToOne
+    @JoinColumn(name = "group_id", nullable = false)
+    Group group;
 }

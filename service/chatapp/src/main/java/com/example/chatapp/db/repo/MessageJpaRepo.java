@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MessageJpaRepo extends JpaRepository<Message, Long> {
-    List<Message> findMessagesBySenderAndReceiverTypeAndReceiverId(AppUser sender, RecipientType recipientType, long receiverId);
+    List<Message> findMessagesBySenderAndRecipientTypeAndRecipientId(AppUser sender, RecipientType recipientType, long recipientId);
 }

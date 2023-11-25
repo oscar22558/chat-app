@@ -32,9 +32,15 @@ public class AppUser {
     @Column
     String password;
 
+    @OneToMany(mappedBy = "user")
+    List<Member> groupMembers;
+
     @OneToMany(mappedBy = "sender")
     List<Message> sentMessages;
 
     @ManyToMany(mappedBy = "members")
     Set<Group> groups;
+
+    @ManyToMany(mappedBy = "users")
+    Set<Role> roles;
 }
