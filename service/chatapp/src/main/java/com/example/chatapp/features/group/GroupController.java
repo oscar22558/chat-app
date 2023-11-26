@@ -48,9 +48,4 @@ public class GroupController {
         return ResponseEntity.ok(null);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> leaveGroup(@PathVariable Long id){
-        service.leaveGroup(id);
-        return ResponseEntity.ok(null);
-    }
 }

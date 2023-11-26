@@ -27,7 +27,15 @@ public class Group {
         members.add(member);
     }
 
+    public void addMembers(List<Member> members){
+        this.members.addAll(members);
+    }
+
     public void removeMember(Member member){
        members.remove(member);
+    }
+
+    public void removeMembers(List<Member> members){
+        this.members.removeAll(members);
     }
 }

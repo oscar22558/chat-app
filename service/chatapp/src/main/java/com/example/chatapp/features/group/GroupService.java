@@ -66,18 +66,6 @@ public class GroupService {
         groupJpaRepo.deleteById(id);
     }
 
-    public void leaveGroup(long id){
-        //remove authed user id from member list of the group
-        var userId = userIdentityService.getUserId();
-        var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
-        group.getMembers().stream()
-                .filter(member -> member.getUser().getId().equals(userId))
-                .findFirst()
-                .ifPresent(member -> {
-                    group.removeMember(member);
-                    memberJpaRepo.delete(member);
-                });
-        groupJpaRepo.save(group);
-    }
+
 
 }
