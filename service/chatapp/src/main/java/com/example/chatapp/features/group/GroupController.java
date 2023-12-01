@@ -28,14 +28,14 @@ public class GroupController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createGroup(GroupCreateRequest request){
+    public ResponseEntity<?> createGroup(@RequestBody GroupCreateRequest request){
         var groupId = service.createGroup(request);
         //send an updated list of recipient to Websocket topic /topic/user/{id}/recipients
        return ResponseEntity.created(URI.create("/api/group/"+groupId)).build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateGroup(long id, GroupPutRequest request){
+    public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestBody GroupPutRequest request){
         service.updateGroup(id, request);
         //send an updated list of recipient to Websocket topic /topic/user/{id}/recipients
         return ResponseEntity.ok(null);

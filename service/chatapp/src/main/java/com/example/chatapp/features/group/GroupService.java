@@ -63,6 +63,9 @@ public class GroupService {
     }
 
     public void deleteGroup(long id){
+        var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
+        var members = group.getMembers();
+        memberJpaRepo.deleteAll(members);
         groupJpaRepo.deleteById(id);
     }
 
