@@ -1,8 +1,12 @@
 package com.example.chatapp.features.group;
 
+import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
+import com.example.chatapp.common.exception.UnAuthorizedException;
+import com.example.chatapp.db.entity.Contact;
 import com.example.chatapp.db.entity.GroupRoleType;
 import com.example.chatapp.db.entity.Member;
+import com.example.chatapp.db.entity.RecipientType;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
@@ -17,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Objects;
 
 @Service
@@ -31,9 +34,13 @@ public class GroupService {
     UserIdentityService userIdentityService;
     GroupCreateRequestMapper groupCreateRequestMapper = new GroupCreateRequestMapper();
     GroupViewMapper groupViewMapper = new GroupViewMapper();
+    MemberPermissionChecker memberPermissionChecker;
 
     public GroupView getGroup(long id){
+        var authUserId = userIdentityService.getUserId();
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canGetGroup(authUserId);
         return groupViewMapper.map(group);
     }
 
@@ -53,6 +60,18 @@ public class GroupService {
                 }).toList();
         members.forEach(savedGroup::addMember);
         memberJpaRepo.saveAll(members);
+
+        members.forEach(member -> {
+            var contacts = member.getUser().getContacts();
+            var newContact = new Contact();
+            newContact.setRecipientId(savedGroup.getId());
+            newContact.setRecipientType(RecipientType.GROUP);
+            newContact.setUpdatedAt(AppTimestamp.newInstance());
+            newContact.setUser(member.getUser());
+            contacts.add(newContact);
+        });
+        //TODO: update contact subscriptions
+
         return groupJpaRepo.save(group).getId();
     }
 
@@ -68,7 +87,4 @@ public class GroupService {
         memberJpaRepo.deleteAll(members);
         groupJpaRepo.deleteById(id);
     }
-
-
-
 }

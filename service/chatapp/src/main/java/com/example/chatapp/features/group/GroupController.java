@@ -19,7 +19,6 @@ import java.net.URI;
 public class GroupController {
 
     GroupService service;
-    UserIdentityService userIdentityService;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getGroup(@PathVariable  Long id){
@@ -30,21 +29,18 @@ public class GroupController {
     @PostMapping
     public ResponseEntity<?> createGroup(@RequestBody GroupCreateRequest request){
         var groupId = service.createGroup(request);
-        //send an updated list of recipient to Websocket topic /topic/user/{id}/recipients
        return ResponseEntity.created(URI.create("/api/group/"+groupId)).build();
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestBody GroupPutRequest request){
         service.updateGroup(id, request);
-        //send an updated list of recipient to Websocket topic /topic/user/{id}/recipients
         return ResponseEntity.ok(null);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteGroup(@PathVariable Long id){
         service.deleteGroup(id);
-        //send an updated list of recipient to Websocket topic /topic/user/{id}/recipients
         return ResponseEntity.ok(null);
     }
 

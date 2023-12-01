@@ -1,0 +1,22 @@
+{
+  "role": {
+    "name": "ROLE_USER",
+    "users": [],
+    "privileges": []
+  },
+  "users": [
+    {
+      "username": "user1",
+      "password": "123"
+    },
+    {
+      "username": "user2",
+      "password": "123"
+    },
+    {
+      "username": "user3",
+      "password": "123"
+    }
+  ]
+
+}
