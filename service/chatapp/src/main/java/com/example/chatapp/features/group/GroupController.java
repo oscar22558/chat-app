@@ -2,12 +2,10 @@ package com.example.chatapp.features.group;
 
 import com.example.chatapp.features.group.model.GroupCreateRequest;
 import com.example.chatapp.features.group.model.GroupPutRequest;
-import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -34,7 +32,7 @@ public class GroupController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateGroup(@PathVariable Long id, @RequestBody GroupPutRequest request){
-        service.updateGroup(id, request);
+        service.updateGroupName(id, request);
         return ResponseEntity.ok(null);
     }
 

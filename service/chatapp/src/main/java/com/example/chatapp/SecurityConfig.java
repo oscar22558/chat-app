@@ -32,12 +32,18 @@ public class SecurityConfig{
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JWTAuthFilter jwtAuthFilter) throws Exception {
         http
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(header -> header.frameOptions(
+                        HeadersConfigurer.FrameOptionsConfig::sameOrigin
+                ))
                 .authorizeHttpRequests((authz) -> authz
                         .requestMatchers(antMatcher("/h2-console/**")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST,"/api/auth")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.OPTIONS,"/api/auth")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/user")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/api/user")).permitAll()
+                        .requestMatchers(antMatcher("/chat/**")).permitAll()
                         .requestMatchers(antMatcher("/api/**")).authenticated()
-                        .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/api/**")).permitAll()
                         .requestMatchers(antMatcher("/api/group/**/member/**")).hasRole("USER")
                         .requestMatchers(antMatcher("/api/group/**/members/**")).hasRole("USER")
                         .requestMatchers(antMatcher("/api/group/**")).hasRole("USER")
@@ -45,10 +51,7 @@ public class SecurityConfig{
                         .requestMatchers(antMatcher("/api/user")).hasRole("USER")
                         .anyRequest().denyAll()
                 )
-                .csrf(AbstractHttpConfigurer::disable)
-                .headers(headerConfigurer -> headerConfigurer.frameOptions(
-                        HeadersConfigurer.FrameOptionsConfig::sameOrigin
-                ))
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -77,7 +80,7 @@ public class SecurityConfig{
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("*")
+                        .allowedOriginPatterns("*")
                         .allowedMethods("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS");
             }
         };

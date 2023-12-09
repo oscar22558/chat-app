@@ -4,17 +4,17 @@ import com.example.chatapp.features.contact.model.ContactView;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Controller
+@RestController
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ContactController {
     ContactService service;
-    @SubscribeMapping("/user/{id}/contact")
+    @GetMapping("/contact")
     public List<ContactView> getContact(){
         return service.getContact();
     }

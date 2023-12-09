@@ -17,5 +17,6 @@ public class ContactView {
     Long userId;
     Long recipientId;
     RecipientType recipientType;
+    String recipientName;
     Timestamp updatedAt;
 }

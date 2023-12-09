@@ -7,6 +7,8 @@ import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
+import com.example.chatapp.features.contact.ContactUpdatePushService;
 import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,12 +27,16 @@ public class GroupMemberService {
     UserIdentityService userIdentityService;
     ContactJpaRepo contactJpaRepo;
     MemberPermissionChecker memberPermissionChecker;
+    ContactUpdatePushService contactUpdatePushService;
+    ContactService contactService;
 
     public void addMember(long groupId, long userId){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
         var operatorUserId = userIdentityService.getUserId();
         memberPermissionChecker.setGroup(group);
         memberPermissionChecker.canAddMember(operatorUserId);
+
+        if(memberPermissionChecker.isMember(userId).isPresent()) return;
 
         var newMember = new Member();
         var user = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
@@ -42,15 +48,8 @@ public class GroupMemberService {
         memberJpaRepo.save(newMember);
         groupJpaRepo.save(group);
 
-        var memberContacts = newMember.getUser().getContacts();
-        var newContact = new Contact();
-        newContact.setRecipientId(groupId);
-        newContact.setRecipientType(RecipientType.GROUP);
-        newContact.setUser(user);
-        newContact.setUpdatedAt(AppTimestamp.newInstance());
-        memberContacts.add(newContact);
-        contactJpaRepo.save(newContact);
-        //TODO: update contact subscription of newMember
+        contactService.addContact(user, group);
+        contactUpdatePushService.push(user);
     }
 
     public void addMembers(long groupId, List<Long> userIds){
@@ -58,7 +57,7 @@ public class GroupMemberService {
         var operatorUserId = userIdentityService.getUserId();
         memberPermissionChecker.setGroup(group);
         memberPermissionChecker.canAddMember(operatorUserId);
-
+        //TODO: exclude existing members
         var groupRole = GroupRoleType.MEMBER;
         var newMembers = appUserJpaRepo.findAllById(userIds)
                 .stream().map(appUser -> {
@@ -96,9 +95,13 @@ public class GroupMemberService {
                 .filter(member -> member.getUser().getId().equals(userId))
                 .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
+        var user = groupMember.getUser();
         group.removeMember(groupMember);
         memberJpaRepo.delete(groupMember);
         groupJpaRepo.save(group);
+
+        contactService.removeContact(user, group);
+        contactUpdatePushService.push(user);
     }
 
     public void removeMembers(long groupId, List<Long> userIds){
@@ -125,9 +128,12 @@ public class GroupMemberService {
                 .filter(member -> member.getUser().getId().equals(userId))
                 .findFirst()
                 .ifPresent(member -> {
+                    var user = member.getUser();
                     group.removeMember(member);
                     memberJpaRepo.delete(member);
+                    groupJpaRepo.save(group);
+
+                    contactUpdatePushService.push(user);
                 });
-        groupJpaRepo.save(group);
     }
 }

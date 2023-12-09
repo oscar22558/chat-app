@@ -1,15 +1,13 @@
 package com.example.chatapp.features.group;
 
-import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
-import com.example.chatapp.common.exception.UnAuthorizedException;
-import com.example.chatapp.db.entity.Contact;
 import com.example.chatapp.db.entity.GroupRoleType;
 import com.example.chatapp.db.entity.Member;
-import com.example.chatapp.db.entity.RecipientType;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
+import com.example.chatapp.features.contact.ContactUpdatePushService;
 import com.example.chatapp.features.group.mapper.GroupCreateRequestMapper;
 import com.example.chatapp.features.group.mapper.GroupViewMapper;
 import com.example.chatapp.features.group.model.GroupCreateRequest;
@@ -35,6 +33,8 @@ public class GroupService {
     GroupCreateRequestMapper groupCreateRequestMapper = new GroupCreateRequestMapper();
     GroupViewMapper groupViewMapper = new GroupViewMapper();
     MemberPermissionChecker memberPermissionChecker;
+    ContactUpdatePushService contactUpdatePushService;
+    ContactService contactService;
 
     public GroupView getGroup(long id){
         var authUserId = userIdentityService.getUserId();
@@ -60,31 +60,35 @@ public class GroupService {
                 }).toList();
         members.forEach(savedGroup::addMember);
         memberJpaRepo.saveAll(members);
+        var groupId = groupJpaRepo.save(group).getId();
 
         members.forEach(member -> {
-            var contacts = member.getUser().getContacts();
-            var newContact = new Contact();
-            newContact.setRecipientId(savedGroup.getId());
-            newContact.setRecipientType(RecipientType.GROUP);
-            newContact.setUpdatedAt(AppTimestamp.newInstance());
-            newContact.setUser(member.getUser());
-            contacts.add(newContact);
+            contactService.addContact(member.getUser(), savedGroup);
+            contactUpdatePushService.push(member.getUser());
         });
-        //TODO: update contact subscriptions
 
-        return groupJpaRepo.save(group).getId();
+        return groupId;
     }
 
-    public void updateGroup(long id, GroupPutRequest request){
+    public void updateGroupName(long id, GroupPutRequest request){
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
         group.setName(request.getName());
-        groupJpaRepo.save(group);
+        var savedGroup = groupJpaRepo.save(group);
+
+        savedGroup.getMembers().stream().map(Member::getUser)
+                .forEach(contactUpdatePushService::push);
+
     }
 
     public void deleteGroup(long id){
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
         var members = group.getMembers();
+        var users = members.stream().map(Member::getUser);
         memberJpaRepo.deleteAll(members);
-        groupJpaRepo.deleteById(id);
+
+        users.forEach(user -> {
+            contactService.removeContact(user, group);
+            contactUpdatePushService.push(user);
+        });
     }
 }
