@@ -22,16 +22,7 @@ public class Role{
     @Enumerated(EnumType.STRING)
     private RoleType name;
 
-    @ManyToMany
-    @JoinTable(
-            name = "users_roles",
-            joinColumns = @JoinColumn(
-                    name = "user_id", referencedColumnName = "id"
-            ),
-            inverseJoinColumns = @JoinColumn(
-                    name = "role_id", referencedColumnName = "id"
-            )
-    )
+    @ManyToMany(mappedBy = "roles")
     private Set<AppUser> users;
 
     @ManyToMany

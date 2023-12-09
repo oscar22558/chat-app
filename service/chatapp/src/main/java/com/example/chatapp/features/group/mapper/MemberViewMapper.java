@@ -8,8 +8,9 @@ import com.example.chatapp.features.group.model.MemberView;
 public class MemberViewMapper implements ModelMapper<Member, MemberView> {
     @Override
     public MemberView map(Member input) {
-        var id = input.getId();
-        var username = input.getUser().getUsername();
+        var user = input.getUser();
+        var id = user.getId();
+        var username = user.getUsername();
         var groupRole = input.getGroupRoleType();
         return new MemberView(id, username, groupRole);
     }

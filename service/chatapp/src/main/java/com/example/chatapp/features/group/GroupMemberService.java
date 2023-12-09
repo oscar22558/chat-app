@@ -1,13 +1,14 @@
 package com.example.chatapp.features.group;
 
+import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
-import com.example.chatapp.db.entity.AppUser;
-import com.example.chatapp.db.entity.GroupRoleType;
-import com.example.chatapp.db.entity.Member;
+import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
+import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
-import com.example.chatapp.features.group.model.GroupPermissionChecker;
+import com.example.chatapp.features.contact.ContactService;
+import com.example.chatapp.features.contact.ContactUpdatePushService;
 import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,12 +25,18 @@ public class GroupMemberService {
     AppUserJpaRepo appUserJpaRepo;
     MemberJpaRepo memberJpaRepo;
     UserIdentityService userIdentityService;
-    GroupPermissionChecker groupPermissionChecker;
+    ContactJpaRepo contactJpaRepo;
+    MemberPermissionChecker memberPermissionChecker;
+    ContactUpdatePushService contactUpdatePushService;
+    ContactService contactService;
 
     public void addMember(long groupId, long userId){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
         var operatorUserId = userIdentityService.getUserId();
-        groupPermissionChecker.hasPermission(operatorUserId, userId, group);
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canAddMember(operatorUserId);
+
+        if(memberPermissionChecker.isMember(userId).isPresent()) return;
 
         var newMember = new Member();
         var user = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
@@ -38,15 +45,19 @@ public class GroupMemberService {
         newMember.setUser(user);
         newMember.setGroupRoleType(groupRole);
         group.addMember(newMember);
-        groupJpaRepo.save(group);
         memberJpaRepo.save(newMember);
+        groupJpaRepo.save(group);
+
+        contactService.addContact(user, group);
+        contactUpdatePushService.push(user);
     }
 
     public void addMembers(long groupId, List<Long> userIds){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
         var operatorUserId = userIdentityService.getUserId();
-        groupPermissionChecker.hasPermission(operatorUserId, userIds, group);
-
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canAddMember(operatorUserId);
+        //TODO: exclude existing members
         var groupRole = GroupRoleType.MEMBER;
         var newMembers = appUserJpaRepo.findAllById(userIds)
                 .stream().map(appUser -> {
@@ -59,26 +70,45 @@ public class GroupMemberService {
         group.addMembers(newMembers);
         groupJpaRepo.save(group);
         memberJpaRepo.saveAll(newMembers);
+
+        newMembers.forEach(member -> {
+            var user = member.getUser();
+            var memberContacts = user.getContacts();
+            var newContact = new Contact();
+            newContact.setRecipientId(groupId);
+            newContact.setRecipientType(RecipientType.GROUP);
+            newContact.setUser(user);
+            newContact.setUpdatedAt(AppTimestamp.newInstance());
+            memberContacts.add(newContact);
+            contactJpaRepo.save(newContact);
+            //TODO: update contact subscription of newMember
+        });
     }
 
     public void removeMember(long groupId, long userId){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
         var operatorUserId = userIdentityService.getUserId();
-        groupPermissionChecker.hasPermission(operatorUserId, userId, group);
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canRemoveMember(operatorUserId, userId);
 
         var groupMember = group.getMembers().stream()
                 .filter(member -> member.getUser().getId().equals(userId))
                 .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
+        var user = groupMember.getUser();
         group.removeMember(groupMember);
         memberJpaRepo.delete(groupMember);
         groupJpaRepo.save(group);
+
+        contactService.removeContact(user, group);
+        contactUpdatePushService.push(user);
     }
 
     public void removeMembers(long groupId, List<Long> userIds){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
         var operatorUserId = userIdentityService.getUserId();
-        groupPermissionChecker.hasPermission(operatorUserId, userIds, group);
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canRemoveMembers(operatorUserId, userIds);
 
         var groupMembers = group.getMembers().stream()
                 .filter(member ->
@@ -98,9 +128,12 @@ public class GroupMemberService {
                 .filter(member -> member.getUser().getId().equals(userId))
                 .findFirst()
                 .ifPresent(member -> {
+                    var user = member.getUser();
                     group.removeMember(member);
                     memberJpaRepo.delete(member);
+                    groupJpaRepo.save(group);
+
+                    contactUpdatePushService.push(user);
                 });
-        groupJpaRepo.save(group);
     }
 }

@@ -6,6 +6,8 @@ import com.example.chatapp.db.entity.Member;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
+import com.example.chatapp.features.contact.ContactUpdatePushService;
 import com.example.chatapp.features.group.mapper.GroupCreateRequestMapper;
 import com.example.chatapp.features.group.mapper.GroupViewMapper;
 import com.example.chatapp.features.group.model.GroupCreateRequest;
@@ -17,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Objects;
 
 @Service
@@ -31,9 +32,15 @@ public class GroupService {
     UserIdentityService userIdentityService;
     GroupCreateRequestMapper groupCreateRequestMapper = new GroupCreateRequestMapper();
     GroupViewMapper groupViewMapper = new GroupViewMapper();
+    MemberPermissionChecker memberPermissionChecker;
+    ContactUpdatePushService contactUpdatePushService;
+    ContactService contactService;
 
     public GroupView getGroup(long id){
+        var authUserId = userIdentityService.getUserId();
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
+        memberPermissionChecker.setGroup(group);
+        memberPermissionChecker.canGetGroup(authUserId);
         return groupViewMapper.map(group);
     }
 
@@ -53,22 +60,35 @@ public class GroupService {
                 }).toList();
         members.forEach(savedGroup::addMember);
         memberJpaRepo.saveAll(members);
-        return groupJpaRepo.save(group).getId();
+        var groupId = groupJpaRepo.save(group).getId();
+
+        members.forEach(member -> {
+            contactService.addContact(member.getUser(), savedGroup);
+            contactUpdatePushService.push(member.getUser());
+        });
+
+        return groupId;
     }
 
-    public void updateGroup(long id, GroupPutRequest request){
+    public void updateGroupName(long id, GroupPutRequest request){
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
         group.setName(request.getName());
-        groupJpaRepo.save(group);
+        var savedGroup = groupJpaRepo.save(group);
+
+        savedGroup.getMembers().stream().map(Member::getUser)
+                .forEach(contactUpdatePushService::push);
+
     }
 
     public void deleteGroup(long id){
         var group = groupJpaRepo.findById(id).orElseThrow(RecordNotFoundException::new);
         var members = group.getMembers();
+        var users = members.stream().map(Member::getUser);
         memberJpaRepo.deleteAll(members);
-        groupJpaRepo.deleteById(id);
+
+        users.forEach(user -> {
+            contactService.removeContact(user, group);
+            contactUpdatePushService.push(user);
+        });
     }
-
-
-
 }

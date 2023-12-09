@@ -38,6 +38,18 @@ public class AppUser {
     @OneToMany(mappedBy = "sender")
     List<Message> sentMessages;
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(
+                    name = "user_id", referencedColumnName = "id"
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "role_id", referencedColumnName = "id"
+            )
+    )
     Set<Role> roles;
+
+    @OneToMany(mappedBy = "user")
+    List<Contact> contacts;
 }
