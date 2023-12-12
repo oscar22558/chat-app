@@ -42,6 +42,7 @@ public class SecurityConfig{
                         .requestMatchers(antMatcher(HttpMethod.OPTIONS,"/api/auth")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/user")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/api/user")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.OPTIONS, "/api/**")).permitAll()
                         .requestMatchers(antMatcher("/chat/**")).permitAll()
                         .requestMatchers(antMatcher("/api/**")).authenticated()
                         .requestMatchers(antMatcher("/api/group/**/member/**")).hasRole("USER")
