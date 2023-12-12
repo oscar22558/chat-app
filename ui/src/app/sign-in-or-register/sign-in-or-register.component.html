@@ -1,0 +1,16 @@
+<div [formGroup]="authForm">
+  <div>
+    <span>Username:</span>
+    <input style="margin-left: 2rem" formControlName="username"/>
+  </div>
+  <div>
+    <span>Password:</span>
+    <input style="margin-left: 2rem" formControlName="password"/>
+  </div>
+  <div>
+    <button type="button" (click)="signInClick()">Sign-in</button>
+    <button type="button" (click)="getUserInfoClick()">Get user info</button>
+
+  </div>
+</div>
+
