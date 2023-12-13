@@ -34,8 +34,4 @@ export class SignInOrRegisterComponent {
         .catch(err => console.error(err))
     })
   }
-
-  getUserInfoClick() {
-    this.httpClient.get(`${WebapiBaseRoute}/auth/user`).subscribe()
-  }
 }
