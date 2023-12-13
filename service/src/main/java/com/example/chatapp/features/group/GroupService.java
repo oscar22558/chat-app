@@ -19,6 +19,8 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 
 @Service
@@ -47,9 +49,12 @@ public class GroupService {
     public long createGroup(GroupCreateRequest request){
         var authedUserId = userIdentityService.getUserId();
 
+        var memberUserIdSet = new HashSet<>(request.getMemberUserIds());
+        memberUserIdSet.add(authedUserId);
+        var memberUserIdList = memberUserIdSet.stream().toList();
         var group = groupCreateRequestMapper.map(request);
         var savedGroup = groupJpaRepo.save(group);
-        var members = userJpaRepo.findAllById(request.getMemberUserIds())
+        var members = userJpaRepo.findAllById(memberUserIdList)
                 .stream().map(appUser -> {
                     var member = new Member();
                     var groupRole = Objects.equals(appUser.getId(), authedUserId) ? GroupRoleType.ADMIN : GroupRoleType.MEMBER;
