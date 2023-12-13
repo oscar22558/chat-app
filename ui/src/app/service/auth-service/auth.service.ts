@@ -36,6 +36,10 @@ export class AuthService {
     return this.token != null && this.token != ""
   }
 
+  getAuthorizationToken(){
+    return `Bearer ${this.token}`
+  }
+
   removeAuth(){
     this.token = ""
     this.appHttpHeaders.removeAuthorizationHeader()
