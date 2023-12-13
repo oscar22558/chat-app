@@ -14,8 +14,16 @@ export class AppHttpHeaders{
     this.set("Authorization", `Bearer ${token}`)
   }
 
+  removeAuthorizationHeader(){
+    this.remove("Authorization")
+  }
+
   set(key: string, value: string){
     this.headers[key] = value
+  }
+
+  remove(key: string){
+    delete this.headers[key]
   }
 
   get(){
