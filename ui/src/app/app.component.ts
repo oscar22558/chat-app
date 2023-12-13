@@ -14,9 +14,22 @@ export class AppComponent implements OnInit{
 
   ngOnInit(): void {
     if(!this.authService.isAuthed()){
-      this.router.navigateByUrl("/sign-in")
-        .then(nav => {})
-        .catch(err => console.log(err))
+      this.redirectUserToSingInPage()
     }
+  }
+
+  onLogOutClick(){
+    this.authService.removeAuth()
+    this.redirectUserToSingInPage()
+  }
+
+  private redirectUserToSingInPage(){
+    this.router.navigateByUrl("/sign-in")
+      .then(nav => {})
+      .catch(err => console.log(err))
+  }
+
+  isLogOutBtnShown() {
+    return this.authService.isAuthed()
   }
 }
