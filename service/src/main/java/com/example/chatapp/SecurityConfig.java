@@ -46,6 +46,7 @@ public class SecurityConfig{
                         .requestMatchers(antMatcher("/chat/**")).permitAll()
                         .requestMatchers(antMatcher("/api/**")).authenticated()
                         .requestMatchers(antMatcher("/api/group/**/member/**")).hasRole("USER")
+                        .requestMatchers(antMatcher("/api/contact")).hasRole("USER")
                         .requestMatchers(antMatcher("/api/group/**/members/**")).hasRole("USER")
                         .requestMatchers(antMatcher("/api/group/**")).hasRole("USER")
                         .requestMatchers(antMatcher("/api/auth/user")).hasRole("USER")

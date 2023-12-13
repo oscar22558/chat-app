@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import {AuthWebapiService} from "../service/auth-service/auth-webapi-service/auth-webapi.service";
 import {AuthService} from "../service/auth-service/auth.service";
 import {FormControl, FormGroup} from "@angular/forms";
 import {HttpClient} from "@angular/common/http";
@@ -10,9 +9,6 @@ import {Router} from "@angular/router";
   selector: 'app-sign-in-or-register',
   templateUrl: './sign-in-or-register.component.html',
   styleUrls: ['./sign-in-or-register.component.sass'],
-  providers: [
-    AuthWebapiService
-  ]
 })
 export class SignInOrRegisterComponent {
 

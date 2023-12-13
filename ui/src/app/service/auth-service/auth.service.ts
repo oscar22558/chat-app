@@ -25,4 +25,8 @@ export class AuthService {
   isAuthed(): boolean{
     return this.token != null && this.token != ""
   }
+
+  getAuthorizationToken(){
+    return `Bearer ${this.token}`
+  }
 }
