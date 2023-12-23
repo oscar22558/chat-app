@@ -13,6 +13,12 @@ import { ContactsComponent } from './chat/contacts/contacts.component';
 import {AuthService} from "./service/auth-service/auth.service";
 import {AppHttpHeaders} from "./service/app-http-headers";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {MatIconModule} from "@angular/material/icon";
+import {MatButtonModule} from "@angular/material/button";
+import { GroupCreateDialogComponent } from './chat/group-create-dialog/group-create-dialog.component';
+import {MatInputModule} from "@angular/material/input";
+import {MatDialog, MatDialogModule} from "@angular/material/dialog";
+import {MatSnackBarModule} from "@angular/material/snack-bar";
 
 @NgModule({
   declarations: [
@@ -20,6 +26,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     ChatComponent,
     SignInOrRegisterComponent,
     ContactsComponent,
+    GroupCreateDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -29,11 +36,15 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     HttpClientModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
+    MatIconModule,
+    MatButtonModule,
+    MatInputModule,
+    MatDialogModule,
+    MatSnackBarModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: HttpRequestInterceptor, multi: true },
-    // { provide: AuthService },
-    // { provide: AppHttpHeaders },
+
   ],
   bootstrap: [AppComponent]
 })
