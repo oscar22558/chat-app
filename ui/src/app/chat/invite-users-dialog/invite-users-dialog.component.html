@@ -1,0 +1,10 @@
+<div class="p8">
+  <mat-tab-group>
+    <mat-tab label="Friends">
+      <app-invite-friends-tabpage />
+    </mat-tab>
+    <mat-tab label="Other users">
+      <app-invite-other-users-tabpage [groupId]="getGroupId()" />
+    </mat-tab>
+  </mat-tab-group>
+</div>

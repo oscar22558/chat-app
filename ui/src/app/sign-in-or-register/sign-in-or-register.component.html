@@ -1,4 +1,4 @@
-<div [formGroup]="authForm">
+<form [formGroup]="authForm">
   <div>
     <span>Username:</span>
     <input style="margin-left: 2rem" formControlName="username"/>
@@ -10,5 +10,5 @@
   <div>
     <button type="button" (click)="signInClick()">Sign-in</button>
   </div>
-</div>
+</form>
 

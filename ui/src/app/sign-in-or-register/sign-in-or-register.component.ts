@@ -18,7 +18,6 @@ export class SignInOrRegisterComponent {
   })
   constructor(
     private authService: AuthService,
-    private httpClient: HttpClient,
     private router: Router
   ) {}
 

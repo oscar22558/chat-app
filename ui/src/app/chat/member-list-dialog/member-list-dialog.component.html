@@ -1,0 +1,12 @@
+<div class="p-8">
+  <div class="text-2xl">{{getGroupName()}}</div>
+  <div class="text-xl">Members</div>
+  <div class="border">
+    <div class="border mb-2" *ngFor="let member of memberList">
+      <div>{{member.id}}</div>
+      <div>{{member.username}}</div>
+      <button *ngIf="!member.isAuthedUser" mat-stroked-button color="primary" (click)="onDeleteClick(member.id, member.username)">Delete</button>
+    </div>
+  </div>
+  <button mat-stroked-button color="warn" (click)="onLeaveGroupClick()">Leave Group</button>
+</div>

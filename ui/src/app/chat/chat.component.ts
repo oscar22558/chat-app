@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import {AuthService} from "../service/auth-service/auth.service";
-import {Router} from "@angular/router";
+import {MatDialog} from "@angular/material/dialog";
+import {GroupCreateDialogComponent} from "./group-create-dialog/group-create-dialog.component";
 
 @Component({
   selector: 'app-chat',
@@ -8,4 +8,11 @@ import {Router} from "@angular/router";
   styleUrls: ['./chat.component.sass']
 })
 export class ChatComponent {
+  constructor(private dialog: MatDialog) { }
+  onCreateGroupClick() {
+    const ref = this.dialog.open(GroupCreateDialogComponent);
+    ref.afterClosed().subscribe(result => {
+
+    })
+  }
 }

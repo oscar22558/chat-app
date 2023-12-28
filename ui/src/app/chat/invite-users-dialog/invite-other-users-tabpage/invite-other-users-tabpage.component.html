@@ -1,0 +1,28 @@
+<div class="p-8">
+  <form class="">
+    <mat-form-field>
+      <mat-icon matPrefix aria-hidden="false" aria-label="Search" fontIcon="search"></mat-icon>
+      <mat-label>
+        <span>Username</span>
+      </mat-label>
+      <input matInput placeholder="Username" [formControl]="friendUsername">
+    </mat-form-field>
+  </form>
+  <div class="border mt-4">
+    <div *ngFor="let user of invitationNotSentUsers" class="border">
+      <div>{{user.id}}</div>
+      <div>{{user.username}}</div>
+      <button mat-stroked-button color="primary" (click)="onInviteClick(user.id)">Invite</button>
+    </div>
+  </div>
+
+
+  <div class="text-xl">Sent Invitation</div>
+  <div class="border mt-8">
+    <div *ngFor="let invitation of groupInvitations">
+      <div>{{invitation.id}}</div>
+      <div>{{invitation.username}}</div>
+      <button mat-stroked-button color="primary" (click)="onRevokeClick(invitation.id)">Revoke</button>
+    </div>
+  </div>
+</div>

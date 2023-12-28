@@ -4,6 +4,7 @@ import {AuthService} from "../../../service/auth-service/auth.service";
 import {ContactResponse} from "../model/contact-response";
 
 @Injectable()
+//TODO: move under service
 export class ContactsStompService{
   private rxStomp = new RxStomp()
   private socketUrl = "ws://localhost:8080/chat"

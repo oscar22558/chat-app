@@ -5,6 +5,7 @@ import {ContactResponse} from "../model/contact-response";
 import {WebapiBaseRoute} from "../../../service/webapi.config";
 
 @Injectable()
+//TODO: move under service
 export class ContactsWebapiService {
   private route = `${WebapiBaseRoute}/contact`
   constructor(private http: HttpClient) { }
