@@ -8,17 +8,22 @@ import { ChatComponent } from './chat/chat.component';
 import {SignInOrRegisterComponent} from "./sign-in-or-register/sign-in-or-register.component";
 import {HTTP_INTERCEPTORS, HttpClientModule} from "@angular/common/http";
 import {HttpRequestInterceptor} from "./service/http.request.interceptor";
-import {FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {ReactiveFormsModule} from "@angular/forms";
 import { ContactsComponent } from './chat/contacts/contacts.component';
-import {AuthService} from "./service/auth-service/auth.service";
-import {AppHttpHeaders} from "./service/app-http-headers";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {MatIconModule} from "@angular/material/icon";
 import {MatButtonModule} from "@angular/material/button";
 import { GroupCreateDialogComponent } from './chat/group-create-dialog/group-create-dialog.component';
 import {MatInputModule} from "@angular/material/input";
-import {MatDialog, MatDialogModule} from "@angular/material/dialog";
+import {MatDialogModule} from "@angular/material/dialog";
 import {MatSnackBarModule} from "@angular/material/snack-bar";
+import { GroupDeleteDialogComponent } from './chat/group-delete-dialog/group-delete-dialog.component';
+import { InviteUsersDialogComponent } from './chat/invite-users-dialog/invite-users-dialog.component';
+import {MatTabsModule} from "@angular/material/tabs";
+import { InviteFriendsTabpageComponent } from './chat/invite-users-dialog/invite-friends-tabpage/invite-friends-tabpage.component';
+import { InviteOtherUsersTabpageComponent } from './chat/invite-users-dialog/invite-other-users-tabpage/invite-other-users-tabpage.component';
+import { MemberListDialogComponent } from './chat/member-list-dialog/member-list-dialog.component';
+import { DeleteMemberDialogComponent } from './chat/delete-member-dialog/delete-member-dialog.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +32,13 @@ import {MatSnackBarModule} from "@angular/material/snack-bar";
     SignInOrRegisterComponent,
     ContactsComponent,
     GroupCreateDialogComponent,
+    GroupDeleteDialogComponent,
+    GroupDeleteDialogComponent,
+    InviteUsersDialogComponent,
+    InviteFriendsTabpageComponent,
+    InviteOtherUsersTabpageComponent,
+    MemberListDialogComponent,
+    DeleteMemberDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -41,6 +53,7 @@ import {MatSnackBarModule} from "@angular/material/snack-bar";
     MatInputModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatTabsModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: HttpRequestInterceptor, multi: true },

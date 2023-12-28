@@ -3,6 +3,7 @@ package com.example.chatapp.features.group;
 import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.db.entity.GroupRoleType;
 import com.example.chatapp.db.entity.Member;
+import com.example.chatapp.db.entity.MemberInvitationStatus;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
@@ -58,9 +59,14 @@ public class GroupService {
                 .stream().map(appUser -> {
                     var member = new Member();
                     var groupRole = Objects.equals(appUser.getId(), authedUserId) ? GroupRoleType.ADMIN : GroupRoleType.MEMBER;
+                    var invitationStatus =
+                            Objects.equals(appUser.getId(), authedUserId)
+                                    ? MemberInvitationStatus.ACCEPTED
+                                    : MemberInvitationStatus.PENDING;
                     member.setGroupRoleType(groupRole);
                     member.setUser(appUser);
                     member.setGroup(savedGroup);
+                    member.setInvitationStatus(invitationStatus);
                     return member;
                 }).toList();
         members.forEach(savedGroup::addMember);

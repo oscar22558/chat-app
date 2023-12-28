@@ -19,6 +19,10 @@ public class Member {
     @Enumerated(EnumType.STRING)
     GroupRoleType groupRoleType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    MemberInvitationStatus invitationStatus;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     AppUser user;

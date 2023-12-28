@@ -1,5 +1,6 @@
 package com.example.chatapp.features.group;
 
+import com.example.chatapp.db.entity.MemberInvitationStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,6 +14,12 @@ import org.springframework.web.bind.annotation.*;
 public class GroupMemberController {
 
     GroupMemberService service;
+
+    @GetMapping("/member")
+    public ResponseEntity<?> getMember(@PathVariable Long id, @RequestParam MemberInvitationStatus status){
+        var users = this.service.getMembersWithStatus(id, status);
+        return ResponseEntity.ok(users);
+    }
 
     @PostMapping("/member/{userId}")
     public ResponseEntity<?> addMember(@PathVariable Long id, @PathVariable Long userId){

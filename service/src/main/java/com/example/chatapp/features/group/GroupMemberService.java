@@ -9,7 +9,10 @@ import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
 import com.example.chatapp.features.contact.ContactService;
 import com.example.chatapp.features.contact.ContactUpdatePushService;
+import com.example.chatapp.features.group.model.GroupMemberGetResponse;
 import com.example.chatapp.features.user.UserIdentityService;
+import com.example.chatapp.features.user.UserMapper;
+import com.example.chatapp.features.user.model.UserView;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +32,24 @@ public class GroupMemberService {
     MemberPermissionChecker memberPermissionChecker;
     ContactUpdatePushService contactUpdatePushService;
     ContactService contactService;
+    UserMapper userMapper;
+
+    public List<GroupMemberGetResponse> getMembersWithStatus(long groupId, MemberInvitationStatus status){
+        var operatorUserId = userIdentityService.getUserId();
+        return groupJpaRepo.findById(groupId)
+                .orElseThrow(RecordNotFoundException::new)
+                .getMembers()
+                .stream()
+                .filter(member -> member.getInvitationStatus() == status)
+                .map(member -> {
+                    return new GroupMemberGetResponse(
+                            member.getUser().getId(),
+                            member.getUser().getUsername(),
+                            member.getUser().getId().equals(operatorUserId)
+                    );
+                })
+                .toList();
+    }
 
     public void addMember(long groupId, long userId){
         var group = groupJpaRepo.findById(groupId).orElseThrow(RecordNotFoundException::new);
@@ -44,6 +65,7 @@ public class GroupMemberService {
         newMember.setGroup(group);
         newMember.setUser(user);
         newMember.setGroupRoleType(groupRole);
+        newMember.setInvitationStatus(MemberInvitationStatus.PENDING);
         group.addMember(newMember);
         memberJpaRepo.save(newMember);
         groupJpaRepo.save(group);
@@ -65,6 +87,7 @@ public class GroupMemberService {
                     newMember.setGroup(group);
                     newMember.setUser(appUser);
                     newMember.setGroupRoleType(groupRole);
+                    newMember.setInvitationStatus(MemberInvitationStatus.PENDING);
                     return newMember;
                 }).toList();
         group.addMembers(newMembers);
