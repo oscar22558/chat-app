@@ -156,6 +156,7 @@ public class GroupMemberService {
                     memberJpaRepo.delete(member);
                     groupJpaRepo.save(group);
 
+                    contactService.removeContact(user, group);
                     contactUpdatePushService.push(user);
                 });
     }

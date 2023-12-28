@@ -8,5 +8,5 @@
       <button *ngIf="!member.isAuthedUser" mat-stroked-button color="primary" (click)="onDeleteClick(member.id, member.username)">Delete</button>
     </div>
   </div>
-  <button mat-stroked-button color="warn">Leave Group</button>
+  <button mat-stroked-button color="warn" (click)="onLeaveGroupClick()">Leave Group</button>
 </div>
