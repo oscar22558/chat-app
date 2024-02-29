@@ -1,0 +1,16 @@
+<div class="border py-4">
+  <form>
+    <mat-form-field>
+      <mat-icon matPrefix aria-hidden="false" aria-label="Search" fontIcon="search"></mat-icon>
+      <mat-label><span>Username</span></mat-label>
+      <input matInput placeholder="Username" [formControl]="usernameSearchStr">
+    </mat-form-field>
+  </form>
+  <div class="mt-4">
+    <div *ngFor="let user of searchResult">
+      <span>User id: </span><span>{{user.userId}}, </span>
+      <span>Username: </span><span>{{user.username}}</span>
+      <button mat-stroked-button color="primary" class="ml-4" (click)="onInviteClick(user.userId)">Invite</button>
+    </div>
+  </div>
+</div>

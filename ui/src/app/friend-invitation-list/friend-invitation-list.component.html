@@ -1,0 +1,8 @@
+<div>
+  <div>Friend invitations</div>
+  <div *ngFor="let invitation of friendInvitations">
+    <span>{{invitation.userId}}</span>
+    <span class="ml-4">{{invitation.username}}</span>
+    <button class="ml-4" mat-stroked-button color="primary" (click)="onRevokeClick(invitation.userId)">Revoke</button>
+  </div>
+</div>

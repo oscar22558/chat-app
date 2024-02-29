@@ -25,6 +25,12 @@ import { InviteOtherUsersTabpageComponent } from './chat/invite-users-dialog/inv
 import { MemberListDialogComponent } from './chat/member-list-dialog/member-list-dialog.component';
 import { DeleteMemberDialogComponent } from './chat/delete-member-dialog/delete-member-dialog.component';
 import { LeaveGroupConfirmDialogComponent } from './chat/leave-group-confirm-dialog/leave-group-confirm-dialog.component';
+import { GroupInvitationListComponent } from './chat/invite-users-dialog/group-invitation-list/group-invitation-list.component';
+import { FriendComponent } from './friend/friend.component';
+import { FriendListComponent } from './friend-list/friend-list.component';
+import { SendFriendInvitationComponent } from './send-friend-invitation/send-friend-invitation.component';
+import { FriendInvitationListComponent } from './friend-invitation-list/friend-invitation-list.component';
+import { FriendRequestListComponent } from './friend-request-list/friend-request-list.component';
 
 @NgModule({
   declarations: [
@@ -41,6 +47,12 @@ import { LeaveGroupConfirmDialogComponent } from './chat/leave-group-confirm-dia
     MemberListDialogComponent,
     DeleteMemberDialogComponent,
     LeaveGroupConfirmDialogComponent,
+    GroupInvitationListComponent,
+    FriendComponent,
+    FriendListComponent,
+    SendFriendInvitationComponent,
+    FriendInvitationListComponent,
+    FriendRequestListComponent,
   ],
   imports: [
     BrowserModule,

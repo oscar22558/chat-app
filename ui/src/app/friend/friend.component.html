@@ -1,0 +1,11 @@
+<div>
+  <app-send-friend-request (friendInvitationsListUpdatedEvent)="onFriendInvitationListUpdated()" />
+  <app-friend-list />
+  <app-friend-request-list
+    (friendInvitationUserSearchResultUpdatedEvent)="onFriendInvitationUserSearchResultUpdated()"
+    (friendListUpdatedEvent)="onFriendListUpdated()"
+  />
+  <app-friend-invitation-list
+    (friendInvitationUserSearchResultUpdatedEvent)="onFriendInvitationUserSearchResultUpdated()"
+  />
+</div>

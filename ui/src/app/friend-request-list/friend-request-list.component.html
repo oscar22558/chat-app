@@ -1,0 +1,9 @@
+<div>
+  <div>Friend requests</div>
+  <div *ngFor="let request of friendRequests">
+    <span>{{request.userId}}</span>
+    <span class="ml-4">{{request.username}}</span>
+    <button class="ml-4" mat-stroked-button color="primary" (click)="onAcceptClick(request.userId)">Accept</button>
+    <button mat-stroked-button color="primary" (click)="onRejectClick(request.userId)">Reject</button>
+  </div>
+</div>

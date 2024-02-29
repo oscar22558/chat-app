@@ -1,7 +1,7 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {FormControl} from "@angular/forms";
-import {SearchUserInvitationStatusWebapiService} from "../../../service/search-user-webapi-service/search-user-invitation-status-webapi.service";
-import {SearchUserInvitationStatusResponse} from "../../../service/search-user-webapi-service/search-user-invitation-status-response";
+import {SearchUserInvitationStatusWebapiService} from "../../../service/group-invitation/search-user-webapi-service/search-user-invitation-status-webapi.service";
+import {SearchUserInvitationStatusResponse} from "../../../service/group-invitation/search-user-webapi-service/search-user-invitation-status-response";
 import {SendGroupInvitationService} from "../../../service/group-invitation/send-group-invitation-service/send-group-invitation.service";
 import {
   GroupInvitationListWebapiService
@@ -20,21 +20,24 @@ import {
   templateUrl: './invite-other-users-tabpage.component.html',
   styleUrls: ['./invite-other-users-tabpage.component.sass']
 })
-export class InviteOtherUsersTabpageComponent implements OnInit {
+export class InviteOtherUsersTabpageComponent {
 
   @Input("groupId")
   groupId: number = -1
-  friendUsername = new FormControl("")
+  @Output()
+  groupInvitationListUpdated = new EventEmitter<unknown>();
+  @Output()
+  userSearchResultUpdated = new EventEmitter<unknown>();
+
+  searchStr = new FormControl("")
   userSearchResult: SearchUserInvitationStatusResponse = []
-  groupInvitations: GroupInvitationListResponse = []
+
   constructor(
     private searchUserInvitationStatusWebapiService: SearchUserInvitationStatusWebapiService,
     private sendInvitationService: SendGroupInvitationService,
-    private groupInvitationListService: GroupInvitationListWebapiService,
-    private revokeGroupInvitationWebapiService: RevokeGroupInvitationWebapiService,
     private snackBar: MatSnackBar,
   ) {
-    this.friendUsername.valueChanges.subscribe(this.onSearchTextChange.bind(this))
+    this.searchStr.valueChanges.subscribe(this.onSearchTextChange.bind(this))
   }
 
   onSearchTextChange(username: string | null){
@@ -42,56 +45,29 @@ export class InviteOtherUsersTabpageComponent implements OnInit {
       this.userSearchResult = []
       return
     }
-    this.searchUserInvitationStatusWebapiService
-      .search(this.groupId, username ?? "")
-      .subscribe(res => this.userSearchResult = res)
+    this.updateSearchResult(username)
   }
 
   onInviteClick(userId: number) {
     this.sendInvitationService
       .send(this.groupId, userId)
-      .pipe(
-        mergeMap(() => {
-          this.snackBar.open("Invitation sent.", "OK", {duration: 1000})
-          return this.groupInvitationListService.get(this.groupId)
-        }),
-        mergeMap(invitationList => {
-          this.groupInvitations = invitationList
-          return this.searchUserInvitationStatusWebapiService
-            .search(this.groupId, this.friendUsername.value ?? "")
-        })
-      )
-      .subscribe(searchResult => this.userSearchResult = searchResult)
+      .subscribe(() => {
+        this.snackBar.open("Invitation sent.", "OK", {duration: 1000})
+        this.groupInvitationListUpdated.emit()
+        this.userSearchResultUpdated.emit()
+      })
   }
 
-  onRevokeClick(userId: number){
-    this.revokeGroupInvitationWebapiService
-      .revoke(this.groupId, userId)
-      .pipe(
-        mergeMap(() => {
-          this.snackBar.open("Invitation revoked." , "OK", {duration: 1000})
-          return this.groupInvitationListService.get(this.groupId)
-        }),
-        mergeMap(invitationList =>{
-          this.groupInvitations = invitationList
-          return this.searchUserInvitationStatusWebapiService
-            .search(this.groupId, this.friendUsername.value ?? "")
-        })
-      )
-      .subscribe(searchResult => this.userSearchResult = searchResult)
+  updateSearchResult(searchStr?: string | null){
+    const username = searchStr ?? this.searchStr.value ?? ""
+    this.searchUserInvitationStatusWebapiService
+      .search(this.groupId, username)
+      .subscribe(res => this.userSearchResult = res)
   }
 
   get invitationNotSentUsers(){
-    console.log("invitationNotAcceptedUsers called")
     return this.userSearchResult
       .filter(result => result.invitationStatus == "")
   }
 
-  ngOnInit(): void {
-    this.groupInvitationListService
-      .get(this.groupId)
-      .subscribe(invitationList =>
-        this.groupInvitations = invitationList
-      )
-  }
 }

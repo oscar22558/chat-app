@@ -1,5 +1,5 @@
-import {Injectable, OnInit} from '@angular/core';
-import {IMessage, RxStomp} from "@stomp/rx-stomp";
+import {Injectable} from '@angular/core';
+import {RxStomp} from "@stomp/rx-stomp";
 import {AuthService} from "../../../service/auth-service/auth.service";
 import {ContactResponse} from "../model/contact-response";
 
