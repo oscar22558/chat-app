@@ -1,1 +1,17 @@
-<p>invite-friends-tabpage works!</p>
+<div>
+  <form>
+    <mat-form-field>
+      <mat-icon matPrefix aria-hidden="false" aria-label="Search" fontIcon="search"></mat-icon>
+      <mat-label>Search</mat-label>
+      <input matInput placeholder="Friend's username" [formControl]="searchStr">
+    </mat-form-field>
+  </form>
+  <div class="border">
+    <div *ngFor="let friend of friendList" class="border mb-2">
+      <div>{{friend.id}}</div>
+      <div>{{friend.username}}</div>
+      <div>{{friend.status}}</div>
+      <button mat-stroked-button color="primary" (click)="onInviteClick(friend.id)">Invite</button>
+    </div>
+  </div>
+</div>

@@ -7,7 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import java.sql.Array;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +40,12 @@ public class AppUser {
     @OneToMany(mappedBy = "sender")
     List<Message> sentMessages;
 
+    @OneToMany(mappedBy = "requestSender")
+    List<Friend> sentFriendRequests;
+
+    @OneToMany(mappedBy = "requestReceiver")
+    List<Friend> receivedFriendRequests;
+
     @ManyToMany
     @JoinTable(
             name = "users_roles",
@@ -52,4 +60,13 @@ public class AppUser {
 
     @OneToMany(mappedBy = "user")
     List<Contact> contacts;
+
+    public List<Friend> getFriends(){
+        var friends = new ArrayList<Friend>();
+        friends.addAll(sentFriendRequests);
+        friends.addAll(receivedFriendRequests);
+        return friends.stream()
+                .sorted((o1, o2) -> Math.toIntExact(o1.getCreateAt().getTime() - o2.getCreateAt().getTime()))
+                .toList();
+    }
 }

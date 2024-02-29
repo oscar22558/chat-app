@@ -1,0 +1,12 @@
+<div class="py-4 border">
+  <div>
+    <span class="text-2xl ">Friend List</span>
+  </div>
+  <div>
+    <div *ngFor="let friend of friendList">
+        <span>User id: </span><span>{{friend.userId}}, </span>
+        <span>Username: </span><span>{{friend.username}}, </span>
+    </div>
+  </div>
+
+</div>

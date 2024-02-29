@@ -5,7 +5,7 @@
       <mat-label>
         <span>Username</span>
       </mat-label>
-      <input matInput placeholder="Username" [formControl]="friendUsername">
+      <input matInput placeholder="Username" [formControl]="searchStr">
     </mat-form-field>
   </form>
   <div class="border mt-4">
@@ -13,16 +13,6 @@
       <div>{{user.id}}</div>
       <div>{{user.username}}</div>
       <button mat-stroked-button color="primary" (click)="onInviteClick(user.id)">Invite</button>
-    </div>
-  </div>
-
-
-  <div class="text-xl">Sent Invitation</div>
-  <div class="border mt-8">
-    <div *ngFor="let invitation of groupInvitations">
-      <div>{{invitation.id}}</div>
-      <div>{{invitation.username}}</div>
-      <button mat-stroked-button color="primary" (click)="onRevokeClick(invitation.id)">Revoke</button>
     </div>
   </div>
 </div>

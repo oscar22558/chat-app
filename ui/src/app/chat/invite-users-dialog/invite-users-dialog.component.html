@@ -1,10 +1,11 @@
 <div class="p8">
   <mat-tab-group>
     <mat-tab label="Friends">
-      <app-invite-friends-tabpage />
+      <app-invite-friends-tabpage [groupId]="getGroupId()" (groupInvitationListUpdated)="onGroupInvitationListUpdated()" (userSearchResultUpdated)="onSearchResultUpdated()"/>
     </mat-tab>
     <mat-tab label="Other users">
-      <app-invite-other-users-tabpage [groupId]="getGroupId()" />
+      <app-invite-other-users-tabpage [groupId]="getGroupId()" (groupInvitationListUpdated)="onGroupInvitationListUpdated()" (userSearchResultUpdated)="onSearchResultUpdated()"/>
     </mat-tab>
   </mat-tab-group>
+  <app-group-invitation-list [groupId]="getGroupId()" (userSearchResultUpdated)="onSearchResultUpdated()"/>
 </div>
