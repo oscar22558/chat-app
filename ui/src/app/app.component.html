@@ -1,10 +1,10 @@
-<div class="flex flex-row" *ngIf="isLogOutBtnShown()">
+<div class="flex flex-row h-[50px] items-center border" *ngIf="isLogOutBtnShown()">
   <nav class="ml-4 flex-1">
     <a class="mr-4 border p-2" routerLink="/">Home</a>
     <a class="mr-4 border p-2" routerLink="/friend">Friends</a>
     <a class="mr-4 border p-2" routerLink="/chat-debug">Chat-debug</a>
   </nav>
-  <div>
+  <div class="px-4">
     <button (click)="onLogOutClick()">Log out</button>
   </div>
 </div>
