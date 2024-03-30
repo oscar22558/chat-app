@@ -9,4 +9,5 @@ import java.util.List;
 
 public interface MessageJpaRepo extends JpaRepository<Message, Long> {
     List<Message> findMessagesBySenderAndRecipientTypeAndRecipientId(AppUser sender, RecipientType recipientType, long recipientId);
+    List<Message> findMessagesByRecipientIdAndAndRecipientType(long recipientId, RecipientType recipientType);
 }

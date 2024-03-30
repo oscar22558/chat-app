@@ -1,0 +1,17 @@
+<div>
+  <div class="py-8 text-2xl font-semibold"><span>Conversion - Debug</span></div>
+  <form [formGroup]="recipientFormVals">
+    <mat-form-field>
+      <mat-label>Target recipient ID</mat-label>
+      <input matInput placeholder="Recipient ID" formControlName="id">
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Recipient Type</mat-label>
+      <mat-select  formControlName="type">>
+        <mat-option *ngFor="let recipientType of recipientTypeList" [value]="recipientType.val">{{recipientType.title}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-raised-button color="primary">Chat!</button>
+  </form>
+  <app-conversion [recipientId]="recipientId" [recipientType]="recipientType"/>
+</div>

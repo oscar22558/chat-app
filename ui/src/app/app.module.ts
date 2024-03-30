@@ -31,6 +31,10 @@ import { FriendListComponent } from './friend-list/friend-list.component';
 import { SendFriendInvitationComponent } from './send-friend-invitation/send-friend-invitation.component';
 import { FriendInvitationListComponent } from './friend-invitation-list/friend-invitation-list.component';
 import { FriendRequestListComponent } from './friend-request-list/friend-request-list.component';
+import { ConversionComponent } from './chat/conversion/conversion.component';
+import {MatSelectModule} from "@angular/material/select";
+import {MatDividerModule} from "@angular/material/divider";
+import { ConversionDebugComponent } from './chat/conversion-debug/conversion-debug.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +57,8 @@ import { FriendRequestListComponent } from './friend-request-list/friend-request
     SendFriendInvitationComponent,
     FriendInvitationListComponent,
     FriendRequestListComponent,
+    ConversionComponent,
+    ConversionDebugComponent,
   ],
   imports: [
     BrowserModule,
@@ -68,6 +74,8 @@ import { FriendRequestListComponent } from './friend-request-list/friend-request
     MatDialogModule,
     MatSnackBarModule,
     MatTabsModule,
+    MatSelectModule,
+    MatDividerModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: HttpRequestInterceptor, multi: true },

@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ContactsWebapiService} from "./contacts-webapi-service/contacts-webapi.service";
 import {ContactsStompService} from "./contacts-stomp-service/contacts-stomp.service";
 import {ContactResponse} from "./model/contact-response";
@@ -16,7 +16,7 @@ import {MemberListDialogComponent} from "../member-list-dialog/member-list-dialo
     ContactsStompService,
   ]
 })
-export class ContactsComponent implements OnInit {
+export class ContactsComponent implements OnInit, OnDestroy {
   contacts: ContactResponse = []
   constructor(
     private contactsWebapiService: ContactsWebapiService,
@@ -28,9 +28,12 @@ export class ContactsComponent implements OnInit {
     this.contactsWebapiService
       .getContacts()
       .subscribe(res => this.contacts = res)
-    this.contactsStompService.initStomp()
     this.contactsStompService
       .subscribeContactUpdate(newContacts => this.contacts = newContacts)
+  }
+
+  ngOnDestroy() {
+    this.contactsStompService.unsubscribe()
   }
 
   onInviteUsersClick(groupId: number, groupName: string){
