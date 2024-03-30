@@ -113,24 +113,33 @@ public class FriendService {
     }
 
     public void revokeOrRejectFriendRequest(Long userId){
-        removeFriend(userId);
+        var authedUser = userIdentityService.getUser();
+        var targetUser = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
+        var relationship = retrieveFriendRequest(authedUser, userId);
+        friendStatusTransaction.revokeOrRejectRequest(relationship.getStatus());
+        removeFriendRelationship(authedUser, targetUser, relationship);
     }
+
     public void removeFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var targetUser = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
-        var request = retrieveFriendRequest(authedUser, userId);
+        var relationship = retrieveFriendRequest(authedUser, userId);
+        friendStatusTransaction.removeFriend(relationship.getStatus());
+        removeFriendRelationship(authedUser, targetUser, relationship);
+    }
 
-        authedUser.getReceivedFriendRequests().remove(request);
-        authedUser.getSentFriendRequests().remove(request);
-        targetUser.getReceivedFriendRequests().remove(request);
-        targetUser.getSentFriendRequests().remove(request);
-        friendJpaRepo.delete(request);
+    private void removeFriendRelationship(AppUser authedUser, AppUser targetUser, Friend relationship){
+        authedUser.getReceivedFriendRequests().remove(relationship);
+        authedUser.getSentFriendRequests().remove(relationship);
+        targetUser.getReceivedFriendRequests().remove(relationship);
+        targetUser.getSentFriendRequests().remove(relationship);
+        friendJpaRepo.delete(relationship);
     }
 
     public void updateFriendStatus(Long userId, UpdateFriendStatusRequest request){
         if(request.getStatus() == FriendStatus.BLOCKED){
             blockFriend(userId);
-        }else {
+        }else{
             unblockFriend(userId);
         }
     }
@@ -153,7 +162,7 @@ public class FriendService {
         friendJpaRepo.save(request);
     }
 
-    public Friend retrieveFriendRequest(AppUser authedUser, Long targetUserId){
+    private Friend retrieveFriendRequest(AppUser authedUser, Long targetUserId){
         var receivedRequest = authedUser.getReceivedFriendRequests()
                 .stream()
                 .filter(request -> request.getRequestSender().getId().equals(targetUserId))

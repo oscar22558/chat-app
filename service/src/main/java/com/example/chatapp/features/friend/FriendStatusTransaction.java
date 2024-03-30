@@ -27,4 +27,16 @@ public class FriendStatusTransaction {
             throw new FriendStatusTransactionException();
         return FriendStatus.BLOCKED;
     }
+
+    public FriendStatus revokeOrRejectRequest(FriendStatus oldStatus){
+        if(oldStatus != FriendStatus.PENDING)
+            throw new FriendStatusTransactionException();
+        return FriendStatus.REJECTED;
+    }
+
+    public FriendStatus removeFriend(FriendStatus oldStatus){
+        if(oldStatus != FriendStatus.ACCEPTED)
+            throw new FriendStatusTransactionException();
+        return FriendStatus.DELETED;
+    }
 }
