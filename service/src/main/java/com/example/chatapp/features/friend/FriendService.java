@@ -24,7 +24,7 @@ public class FriendService {
     FriendJpaRepo friendJpaRepo;
     UserIdentityService userIdentityService;
     AppUserJpaRepo appUserJpaRepo;
-    FriendStatusChecker friendStatusChecker;
+    FriendStatusTransaction friendStatusTransaction;
     FriendViewMapper friendViewMapper;
     InvitationViewMapper invitationViewMapper;
     ContactService contactService;
@@ -88,7 +88,7 @@ public class FriendService {
         var friend = new Friend();
         friend.setRequestSender(user);
         friend.setRequestReceiver(target);
-        friend.setStatus(FriendStatus.PENDING);
+        friend.setStatus(friendStatusTransaction.sendInvitation());
         friend.setCreateAt(AppTimestamp.newInstance());
         var savedFriend = friendJpaRepo.save(friend);
         return friendViewMapper.map(savedFriend);
@@ -105,9 +105,7 @@ public class FriendService {
                 .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
 
-        if(!friendStatusChecker.isValid(friendRequest.getStatus(), FriendStatus.ACCEPTED))
-            throw new FriendStatusTransactionException();
-        friendRequest.setStatus(FriendStatus.ACCEPTED);
+        friendRequest.setStatus(friendStatusTransaction.acceptRequest(friendRequest.getStatus()));
         friendRequest.setCreateAt(AppTimestamp.newInstance());
         friendJpaRepo.save(friendRequest);
 
@@ -140,20 +138,18 @@ public class FriendService {
     public void blockFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var request = retrieveFriendRequest(authedUser, userId);
+        var newStatus = friendStatusTransaction.block(request.getStatus());
 
-        if(!friendStatusChecker.isValid(request.getStatus(), FriendStatus.BLOCKED))
-            throw new FriendStatusTransactionException();
-        request.setStatus(FriendStatus.BLOCKED);
+        request.setStatus(newStatus);
         friendJpaRepo.save(request);
     }
 
     public void unblockFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var request = retrieveFriendRequest(authedUser, userId);
+        var newStatus = friendStatusTransaction.unblock(request.getStatus());
 
-        if(!friendStatusChecker.isValid(request.getStatus(), FriendStatus.ACCEPTED))
-            throw new FriendStatusTransactionException();
-        request.setStatus(FriendStatus.ACCEPTED);
+        request.setStatus(newStatus);
         friendJpaRepo.save(request);
     }
 
