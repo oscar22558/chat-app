@@ -71,7 +71,6 @@ public class GroupMemberService {
         groupJpaRepo.save(group);
 
         contactService.addContact(user, group);
-        contactUpdatePushService.push(user);
     }
 
     public void addMembers(long groupId, List<Long> userIds){

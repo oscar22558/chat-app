@@ -7,6 +7,7 @@ import com.example.chatapp.db.entity.Friend;
 import com.example.chatapp.db.entity.FriendStatus;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.FriendJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
 import com.example.chatapp.features.friend.model.*;
 import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
@@ -26,6 +27,7 @@ public class FriendService {
     FriendStatusChecker friendStatusChecker;
     FriendViewMapper friendViewMapper;
     InvitationViewMapper invitationViewMapper;
+    ContactService contactService;
 
     public List<FriendInvitationSearchUsersResult> searchUsersForFriendInvitation(String searchStr){
         Long authedUserId = userIdentityService.getUser().getId();
@@ -94,6 +96,8 @@ public class FriendService {
 
     public void acceptFriendRequest(Long userId){
         var authedUser = userIdentityService.getUser();
+        var targetUser = appUserJpaRepo.findById(userId)
+                .orElseThrow(RecordNotFoundException::new);
 
         var friendRequest = authedUser.getReceivedFriendRequests()
                 .stream()
@@ -106,6 +110,8 @@ public class FriendService {
         friendRequest.setStatus(FriendStatus.ACCEPTED);
         friendRequest.setCreateAt(AppTimestamp.newInstance());
         friendJpaRepo.save(friendRequest);
+
+        contactService.addContact(authedUser, targetUser);
     }
 
     public void revokeOrRejectFriendRequest(Long userId){
