@@ -1,8 +1,14 @@
-
 <div class="absolute right-8 bottom-8">
   <button mat-fab color="primary" aria-label="Create Group" (click)="onCreateGroupClick()">
     <mat-icon>add</mat-icon>
   </button>
 </div>
-<app-contacts />
+<div>
+  <div>
+    <app-contacts (onChatStarted)="onChatStarted($event)"/>
+  </div>
+  <div>
+    <app-conversion [recipientId]="recipientId" [recipientType]="recipientType"/>
+  </div>
+</div>
 

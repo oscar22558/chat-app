@@ -1,0 +1,16 @@
+<div>
+  <mat-divider></mat-divider>
+  <div class="py-4"><span>Recipient Id: {{recipientId}}, recipient type: {{recipientType}}</span></div>
+  <div>
+    <div *ngFor="let msg of conversion">
+      <span>sender: ({{msg.senderId}}-{{msg.senderUsername}}), content: {{msg.content}}</span>
+    </div>
+  </div>
+  <mat-form-field>
+    <mat-label>Message</mat-label>
+    <input matInput placeholder="Message" [formControl]="msg">
+  </mat-form-field>
+  <button mat-icon-button color="primary" (click)="sendMsg()">
+    <mat-icon aria-hidden="false" aria-label="Example home icon" fontIcon="send"></mat-icon>
+  </button>
+</div>

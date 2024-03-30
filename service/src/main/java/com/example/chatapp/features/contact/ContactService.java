@@ -27,6 +27,8 @@ public class ContactService {
     ContactViewMapper mapper;
     AppUserJpaRepo appUserJpaRepo;
     ContactJpaRepo contactJpaRepo;
+    ContactUpdatePushService contactUpdatePushService;
+
     public List<ContactView> getContact(){
         var authedUser = userIdentityService.getUser();
         var contacts = authedUser.getContacts();
@@ -44,10 +46,28 @@ public class ContactService {
 
         contacts.add(savedContact);
         appUserJpaRepo.save(user);
+        contactUpdatePushService.push(user);
     }
 
     public void addContact(AppUser user, AppUser recipient){
-        //TODO: implementation
+        var userContact = new Contact();
+        userContact.setUpdatedAt(AppTimestamp.newInstance());
+        userContact.setRecipientId(recipient.getId());
+        userContact.setRecipientType(RecipientType.USER);
+        userContact.setUser(user);
+        user.getContacts().add(userContact);
+        contactJpaRepo.save(userContact);
+
+        var recipientContact = new Contact();
+        recipientContact.setUpdatedAt(AppTimestamp.newInstance());
+        recipientContact.setRecipientId(user.getId());
+        recipientContact.setRecipientType(RecipientType.USER);
+        recipientContact.setUser(recipient);
+        recipient.getContacts().add(recipientContact);
+        contactJpaRepo.save(recipientContact);
+
+        contactUpdatePushService.push(user);
+        contactUpdatePushService.push(recipient);
     }
 
     public void removeContact(AppUser user, Group group){

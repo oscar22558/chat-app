@@ -7,6 +7,7 @@ import com.example.chatapp.db.entity.Friend;
 import com.example.chatapp.db.entity.FriendStatus;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.FriendJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
 import com.example.chatapp.features.friend.model.*;
 import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
@@ -23,9 +24,10 @@ public class FriendService {
     FriendJpaRepo friendJpaRepo;
     UserIdentityService userIdentityService;
     AppUserJpaRepo appUserJpaRepo;
-    FriendStatusChecker friendStatusChecker;
+    FriendStatusTransaction friendStatusTransaction;
     FriendViewMapper friendViewMapper;
     InvitationViewMapper invitationViewMapper;
+    ContactService contactService;
 
     public List<FriendInvitationSearchUsersResult> searchUsersForFriendInvitation(String searchStr){
         Long authedUserId = userIdentityService.getUser().getId();
@@ -86,7 +88,7 @@ public class FriendService {
         var friend = new Friend();
         friend.setRequestSender(user);
         friend.setRequestReceiver(target);
-        friend.setStatus(FriendStatus.PENDING);
+        friend.setStatus(friendStatusTransaction.sendInvitation());
         friend.setCreateAt(AppTimestamp.newInstance());
         var savedFriend = friendJpaRepo.save(friend);
         return friendViewMapper.map(savedFriend);
@@ -94,6 +96,8 @@ public class FriendService {
 
     public void acceptFriendRequest(Long userId){
         var authedUser = userIdentityService.getUser();
+        var targetUser = appUserJpaRepo.findById(userId)
+                .orElseThrow(RecordNotFoundException::new);
 
         var friendRequest = authedUser.getReceivedFriendRequests()
                 .stream()
@@ -101,32 +105,41 @@ public class FriendService {
                 .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
 
-        if(!friendStatusChecker.isValid(friendRequest.getStatus(), FriendStatus.ACCEPTED))
-            throw new FriendStatusTransactionException();
-        friendRequest.setStatus(FriendStatus.ACCEPTED);
+        friendRequest.setStatus(friendStatusTransaction.acceptRequest(friendRequest.getStatus()));
         friendRequest.setCreateAt(AppTimestamp.newInstance());
         friendJpaRepo.save(friendRequest);
+
+        contactService.addContact(authedUser, targetUser);
     }
 
     public void revokeOrRejectFriendRequest(Long userId){
-        removeFriend(userId);
+        var authedUser = userIdentityService.getUser();
+        var targetUser = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
+        var relationship = retrieveFriendRequest(authedUser, userId);
+        friendStatusTransaction.revokeOrRejectRequest(relationship.getStatus());
+        removeFriendRelationship(authedUser, targetUser, relationship);
     }
+
     public void removeFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var targetUser = appUserJpaRepo.findById(userId).orElseThrow(RecordNotFoundException::new);
-        var request = retrieveFriendRequest(authedUser, userId);
+        var relationship = retrieveFriendRequest(authedUser, userId);
+        friendStatusTransaction.removeFriend(relationship.getStatus());
+        removeFriendRelationship(authedUser, targetUser, relationship);
+    }
 
-        authedUser.getReceivedFriendRequests().remove(request);
-        authedUser.getSentFriendRequests().remove(request);
-        targetUser.getReceivedFriendRequests().remove(request);
-        targetUser.getSentFriendRequests().remove(request);
-        friendJpaRepo.delete(request);
+    private void removeFriendRelationship(AppUser authedUser, AppUser targetUser, Friend relationship){
+        authedUser.getReceivedFriendRequests().remove(relationship);
+        authedUser.getSentFriendRequests().remove(relationship);
+        targetUser.getReceivedFriendRequests().remove(relationship);
+        targetUser.getSentFriendRequests().remove(relationship);
+        friendJpaRepo.delete(relationship);
     }
 
     public void updateFriendStatus(Long userId, UpdateFriendStatusRequest request){
         if(request.getStatus() == FriendStatus.BLOCKED){
             blockFriend(userId);
-        }else {
+        }else{
             unblockFriend(userId);
         }
     }
@@ -134,24 +147,22 @@ public class FriendService {
     public void blockFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var request = retrieveFriendRequest(authedUser, userId);
+        var newStatus = friendStatusTransaction.block(request.getStatus());
 
-        if(!friendStatusChecker.isValid(request.getStatus(), FriendStatus.BLOCKED))
-            throw new FriendStatusTransactionException();
-        request.setStatus(FriendStatus.BLOCKED);
+        request.setStatus(newStatus);
         friendJpaRepo.save(request);
     }
 
     public void unblockFriend(Long userId){
         var authedUser = userIdentityService.getUser();
         var request = retrieveFriendRequest(authedUser, userId);
+        var newStatus = friendStatusTransaction.unblock(request.getStatus());
 
-        if(!friendStatusChecker.isValid(request.getStatus(), FriendStatus.ACCEPTED))
-            throw new FriendStatusTransactionException();
-        request.setStatus(FriendStatus.ACCEPTED);
+        request.setStatus(newStatus);
         friendJpaRepo.save(request);
     }
 
-    public Friend retrieveFriendRequest(AppUser authedUser, Long targetUserId){
+    private Friend retrieveFriendRequest(AppUser authedUser, Long targetUserId){
         var receivedRequest = authedUser.getReceivedFriendRequests()
                 .stream()
                 .filter(request -> request.getRequestSender().getId().equals(targetUserId))

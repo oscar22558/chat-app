@@ -73,11 +73,7 @@ public class GroupService {
         memberJpaRepo.saveAll(members);
         var groupId = groupJpaRepo.save(group).getId();
 
-        members.forEach(member -> {
-            contactService.addContact(member.getUser(), savedGroup);
-            contactUpdatePushService.push(member.getUser());
-        });
-
+        members.forEach(member -> contactService.addContact(member.getUser(), savedGroup));
         return groupId;
     }
 
