@@ -3,6 +3,8 @@ import {AuthWebapiService} from "./auth-webapi-service/auth-webapi.service";
 import {AuthRequest} from "./model/auth.request";
 import {AppHttpHeaders} from "../app-http-headers";
 import {LocalStorageService} from "../local-storage-service/local-storage.service";
+import {AuthedUserWebapiService} from "./authed-user-webapi-service/authed-user-webapi.service";
+import {AuthedUser} from "./model/authed-user";
 
 @Injectable({
   providedIn: 'root'
@@ -10,15 +12,20 @@ import {LocalStorageService} from "../local-storage-service/local-storage.servic
 export class AuthService {
   private token = ""
   private storageKey = "access_token"
+  private _authedUser?: AuthedUser
   constructor(
     private authWebapiService: AuthWebapiService,
     private appHttpHeaders: AppHttpHeaders,
     private localStorageService: LocalStorageService,
+    private authedUserWebapiService: AuthedUserWebapiService,
   ) {
     const accessToken = localStorageService.getData(this.storageKey)
     if(accessToken){
       this.token = accessToken
       this.appHttpHeaders.setAuthorizationHeader(accessToken)
+      this.authedUserWebapiService
+        .getUser()
+        .subscribe(res => this._authedUser = res)
     }
   }
 
@@ -44,5 +51,9 @@ export class AuthService {
     this.token = ""
     this.appHttpHeaders.removeAuthorizationHeader()
     this.localStorageService.removeData(this.storageKey)
+  }
+
+  get authedUser(): AuthedUser | undefined {
+    return this._authedUser
   }
 }

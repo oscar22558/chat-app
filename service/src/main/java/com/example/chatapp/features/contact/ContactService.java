@@ -10,9 +10,12 @@ import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.features.contact.model.ContactView;
 import com.example.chatapp.features.user.UserIdentityService;
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +29,7 @@ public class ContactService {
     AppUserJpaRepo appUserJpaRepo;
     ContactJpaRepo contactJpaRepo;
     ContactUpdatePushService contactUpdatePushService;
+    Logger logger = LoggerFactory.getLogger(ContactService.class);
 
     public List<ContactView> getContact(){
         var authedUser = userIdentityService.getUser();
@@ -81,6 +85,7 @@ public class ContactService {
     }
 
     public void markNewMsgAsRead(AppUser sender, AppUser recipient){
+        logger.info("markNewMsgAsRead: {}, {}", sender.getUsername(), recipient.getUsername());
         if(sender.getId().equals(recipient.getId())) return;
 
         var recipientContact = getContact(sender, recipient);
@@ -105,7 +110,7 @@ public class ContactService {
         contactUpdatePushService.push(recipient);
     }
 
-    private Contact getContact(AppUser sender, AppUser recipient){
+    public Contact getContact(AppUser sender, AppUser recipient){
         return recipient.getContacts().stream()
                 .filter(contact -> contact.getRecipientId().equals(sender.getId())
                         && contact.getRecipientType() == RecipientType.USER
@@ -113,7 +118,7 @@ public class ContactService {
                 .orElseThrow(RecordNotFoundException::new);
     }
 
-    private Contact getContact(AppUser sender, Group recipient){
+    public Contact getContact(AppUser sender, Group recipient){
         return sender.getContacts().stream()
                 .filter(contact -> contact.getRecipientId().equals(recipient.getId())
                         && contact.getRecipientType() == RecipientType.GROUP

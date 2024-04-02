@@ -85,11 +85,14 @@ public class DataSeed {
                     });
 
             jsonData.getContacts()
-                    .forEach(contact -> {
-                        var sender = findUserByUsername(savedUsers, contact.get(0));
-                        var recipient = findUserByUsername(savedUsers, contact.get(1));
+                    .forEach(username -> {
+                        var sender = findUserByUsername(savedUsers, username.get(0));
+                        var recipient = findUserByUsername(savedUsers, username.get(1));
                         var senderContact = buildContact(sender, recipient);
                         var recipientContact = buildContact(recipient, sender);
+                        sender.getContacts().add(senderContact);
+                        recipient.getContacts().add(recipientContact);
+
                         contactJpaRepo.save(senderContact);
                         contactJpaRepo.save(recipientContact);
                     });

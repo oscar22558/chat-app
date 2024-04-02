@@ -1,4 +1,5 @@
 export type Conversion = {
+  id: number,
   senderId: number,
   senderUsername: string,
   content: string,

@@ -1,4 +1,4 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {
   GetConversionWebapiService
 } from "../../service/conversion/get-conversion-webapi-service/get-conversion-webapi.service";
@@ -9,6 +9,8 @@ import {
   SubscribeMessageStompService
 } from "../../service/conversion/subscribe-message-stomp-service/subscribe-message-stomp.service";
 import {SendMessageStompService} from "../../service/conversion/send-message-stomp-service/send-message-stomp.service";
+import {ReadMessageStompService} from "../../service/conversion/read-message-stomp-service/read-message-stomp.service";
+import {AuthService} from "../../service/auth-service/auth.service";
 
 @Component({
   selector: 'app-conversion',
@@ -16,9 +18,11 @@ import {SendMessageStompService} from "../../service/conversion/send-message-sto
   styleUrls: ['./conversion.component.sass'],
   providers: [SubscribeMessageStompService]
 })
-export class ConversionComponent implements OnInit, OnDestroy{
+export class ConversionComponent implements OnInit, OnDestroy, AfterViewInit{
   private _recipientId: number = -1
   private _recipientType: RecipientType = "USER"
+  @ViewChild("container")
+  containerRef?: ElementRef
 
   msg = new FormControl("")
   conversion: Conversion = []
@@ -26,10 +30,27 @@ export class ConversionComponent implements OnInit, OnDestroy{
               private subscribeMessageService: SubscribeMessageStompService,
               private sendMessageService: SendMessageStompService,
               private getConversionService: GetConversionWebapiService,
+              private readMessageStompService: ReadMessageStompService,
+              private authService: AuthService
   ) { }
 
   ngOnInit() {
     this.updateRecipientSubscription()
+
+  }
+
+  ngAfterViewInit(): void {
+    const ref = this.containerRef?.nativeElement
+    console.log(ref)
+    ref?.addEventListener("click", () => {
+      const now = new Date()
+      this.conversion.filter(conversion => conversion.status === "SENT" && conversion.senderUsername !== this.authService.authedUser?.username && this.authService?.authedUser != null)
+        .forEach(conversion => {
+        if(conversion.status == "SENT"){
+          this.readMessageStompService.readMessage({messageId: conversion.id, readTime: now})
+        }
+      })
+    })
   }
 
 

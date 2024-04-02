@@ -74,6 +74,7 @@ public class MessageService {
         return sortedMsg
                 .stream()
                 .map(msg -> new MessageView(
+                        msg.getId(),
                         msg.getSender().getId(),
                         msg.getSender().getUsername(),
                         msg.getContent(),
@@ -83,25 +84,26 @@ public class MessageService {
                 )).toList();
     }
 
+    @Transactional
     public void readNewMsg(long msgId, Timestamp readTime){
-        var authedUser = userIdentityService.getUser();
         var msg = messageJpaRepo.findById(msgId)
                         .orElseThrow(RecordNotFoundException::new);
         var newStatus = messageStatusTransaction.read(msg.getStatus());
         long receiverId = msg.getRecipientId();
         RecipientType recipientType = msg.getRecipientType();
+        var sender = msg.getSender();
         msg.setReadAt(readTime);
         msg.setStatus(newStatus);
         messageJpaRepo.save(msg);
 
-        if(recipientType == RecipientType.USER){
+        if(recipientType == RecipientType.GROUP){
             var group = groupJpaRepo.findById(receiverId)
                     .orElseThrow(RecordNotFoundException::new);
-            contactService.markNewMsgAsRead(authedUser, group);
+            contactService.markNewMsgAsRead(sender, group);
         }else{
             var recipient = appUserJpaRepo.findById(receiverId)
                     .orElseThrow(RecordNotFoundException::new);
-            contactService.markNewMsgAsRead(authedUser, recipient);
+            contactService.markNewMsgAsRead(sender, recipient);
         }
     }
 

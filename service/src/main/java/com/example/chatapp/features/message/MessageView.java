@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MessageView {
+    Long id;
     Long senderId;
     String senderUsername;
     String content;
