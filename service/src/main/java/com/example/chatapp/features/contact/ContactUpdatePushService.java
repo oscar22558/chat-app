@@ -1,11 +1,16 @@
 package com.example.chatapp.features.contact;
 
 import com.example.chatapp.db.entity.AppUser;
+import com.example.chatapp.model.ContactDTO;
+import com.example.chatapp.redis.ContactRedisRepo;
+import com.example.chatapp.redis.entity.Contact;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -14,10 +19,15 @@ import org.springframework.stereotype.Service;
 public class ContactUpdatePushService {
 
     SimpMessagingTemplate messagingTemplate;
-    ContactViewMapper mapper;
+    ContactRedisRepo contactRedisRepo;
+    ContactDTOConverter mapper;
 
     public void push(AppUser user){
-        var contacts = user.getContacts();
+        var contacts = contactRedisRepo.findAllByUserId(user.getId());
+        push(user, contacts);
+    }
+
+    public void push(AppUser user, List<Contact> contacts){
         var username = user.getUsername();
         var payload = mapper.map(contacts);
 
@@ -26,5 +36,9 @@ public class ContactUpdatePushService {
                 "/queue/contact",
                 payload
         );
+    }
+
+    public void pushAll(List<AppUser> users){
+
     }
 }

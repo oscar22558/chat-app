@@ -1,18 +1,14 @@
 package com.example.chatapp.features.group;
 
-import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
-import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MemberJpaRepo;
 import com.example.chatapp.features.contact.ContactService;
 import com.example.chatapp.features.contact.ContactUpdatePushService;
 import com.example.chatapp.features.group.model.GroupMemberGetResponse;
 import com.example.chatapp.features.user.UserIdentityService;
-import com.example.chatapp.features.user.UserMapper;
-import com.example.chatapp.features.user.model.UserView;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,11 +24,9 @@ public class GroupMemberService {
     AppUserJpaRepo appUserJpaRepo;
     MemberJpaRepo memberJpaRepo;
     UserIdentityService userIdentityService;
-    ContactJpaRepo contactJpaRepo;
     MemberPermissionChecker memberPermissionChecker;
     ContactUpdatePushService contactUpdatePushService;
     ContactService contactService;
-    UserMapper userMapper;
 
     public List<GroupMemberGetResponse> getMembersWithStatus(long groupId, MemberInvitationStatus status){
         var operatorUserId = userIdentityService.getUserId();
@@ -93,18 +87,7 @@ public class GroupMemberService {
         groupJpaRepo.save(group);
         memberJpaRepo.saveAll(newMembers);
 
-        newMembers.forEach(member -> {
-            var user = member.getUser();
-            var memberContacts = user.getContacts();
-            var newContact = new Contact();
-            newContact.setRecipientId(groupId);
-            newContact.setRecipientType(RecipientType.GROUP);
-            newContact.setUser(user);
-            newContact.setUpdatedAt(AppTimestamp.newInstance());
-            memberContacts.add(newContact);
-            contactJpaRepo.save(newContact);
-            //TODO: update contact subscription of newMember
-        });
+        newMembers.forEach(member -> contactService.addContact(member.getUser(), group));
     }
 
     public void removeMember(long groupId, long userId){

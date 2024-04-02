@@ -23,6 +23,9 @@ public class Group {
     @OneToMany(mappedBy = "group")
     List<Member> members;
 
+    @Column(name = "is_deleted")
+    private Boolean isDeleted;
+
     public void addMember(Member member){
         members.add(member);
     }

@@ -42,4 +42,16 @@ public class GroupController {
         return ResponseEntity.ok(null);
     }
 
+    @PostMapping("/{id}/invitation")
+    public ResponseEntity<?> acceptInvitation(@PathVariable Long id) {
+        service.acceptGroupInvitation(id);
+        return ResponseEntity.ok(null);
+    }
+
+    @DeleteMapping("/{id}/invitation")
+    public ResponseEntity<?> rejectInvitation(@PathVariable Long id){
+        service.rejectGroupInvitation(id);
+        return ResponseEntity.ok(null);
+    }
+
 }

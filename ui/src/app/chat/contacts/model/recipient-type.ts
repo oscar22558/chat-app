@@ -1,2 +1,5 @@
-export type RecipientType = "GROUP" | "USER"
-export const RecipientTypeList: RecipientType[] = ["GROUP", "USER"]
+export enum RecipientType {
+    GROUP="GROUP",
+    USER="USER",
+}
+export const RecipientTypeList = [RecipientType.GROUP, RecipientType.USER]

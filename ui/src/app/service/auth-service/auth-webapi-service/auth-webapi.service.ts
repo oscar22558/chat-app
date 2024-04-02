@@ -4,7 +4,6 @@ import {AuthRequest} from "../model/auth.request";
 import {WebapiBaseRoute} from "../../webapi.config";
 import {AuthResponse} from "../model/auth.response";
 import {Observable} from "rxjs";
-import {AppHttpHeaders} from "../../app-http-headers";
 
 @Injectable({
   providedIn: "root"

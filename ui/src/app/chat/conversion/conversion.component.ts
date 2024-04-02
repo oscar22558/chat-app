@@ -1,85 +1,109 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {
-  GetConversionWebapiService
+    GetConversionWebapiService
 } from "../../service/conversion/get-conversion-webapi-service/get-conversion-webapi.service";
 import {RecipientType} from "../contacts/model/recipient-type";
 import {Conversion} from "../../service/conversion/conversion";
 import {FormControl} from "@angular/forms";
 import {
-  SubscribeMessageStompService
+    SubscribeMessageStompService
 } from "../../service/conversion/subscribe-message-stomp-service/subscribe-message-stomp.service";
 import {SendMessageStompService} from "../../service/conversion/send-message-stomp-service/send-message-stomp.service";
+import {ReadMessageStompService} from "../../service/conversion/read-message-stomp-service/read-message-stomp.service";
+import {AuthService} from "../../service/auth-service/auth.service";
+import {Recipient} from "../model/recipient";
+import {Optional} from "../../common/optional";
 
 @Component({
-  selector: 'app-conversion',
-  templateUrl: './conversion.component.html',
-  styleUrls: ['./conversion.component.sass'],
-  providers: [SubscribeMessageStompService]
+    selector: 'app-conversion',
+    templateUrl: './conversion.component.html',
+    styleUrls: ['./conversion.component.sass'],
+    providers: [SubscribeMessageStompService]
 })
-export class ConversionComponent implements OnInit, OnDestroy{
-  private _recipientId?: number
-  private _recipientType?: RecipientType
+export class ConversionComponent implements OnInit, OnDestroy, AfterViewInit {
+    private mRecipient?: Recipient | null
+    @ViewChild("container")
+    containerRef?: ElementRef
 
-  msg = new FormControl("")
-  conversion: Conversion = []
-  constructor(private service: GetConversionWebapiService,
-              private subscribeMessageService: SubscribeMessageStompService,
-              private sendMessageService: SendMessageStompService,
-              private getConversionService: GetConversionWebapiService,
-  ) { }
+    msg = new FormControl("")
+    conversion: Conversion = []
 
-  ngOnInit() {
-    if(this._recipientId != null && this._recipientType){
-      this.service
-        .get(this._recipientId, this._recipientType)
-        .subscribe(res => this.conversion = res)
-      this.subscribeMessageService.subscribe(res => {
-        this.conversion = res
-      });
+    constructor(private service: GetConversionWebapiService,
+                private subscribeMessageService: SubscribeMessageStompService,
+                private sendMessageService: SendMessageStompService,
+                private getConversionService: GetConversionWebapiService,
+                private readMessageStompService: ReadMessageStompService,
+                private authService: AuthService
+    ) {
     }
-  }
+
+    ngOnInit() {
+        if (this.mRecipient == null) return
+        this.updateRecipientSubscription(this.mRecipient)
+    }
+
+    ngAfterViewInit(): void {
+        const ref = this.containerRef?.nativeElement
+        console.log(ref)
+        ref?.addEventListener("click", () => {
+            this.readMsgList()
+        })
+    }
 
 
-  ngOnDestroy() {
-    this.subscribeMessageService.unsubscribe();
-  }
+    ngOnDestroy() {
+        this.subscribeMessageService.unsubscribe();
+    }
 
-  get recipientId(): number | undefined {
-    return this._recipientId;
-  }
+    @Input()
+    set recipient(recipient: Optional<Recipient>) {
+        this.mRecipient = recipient
+        this.updateRecipientSubscription(recipient);
+    }
 
-  @Input()
-  set recipientId(value: number) {
-    this._recipientId = value;
-    this.updateRecipientSubscription();
-  }
+    get recipient(): Optional<Recipient> {
+        return this.mRecipient
+    }
 
-  get recipientType(): RecipientType | undefined {
-    return this._recipientType;
-  }
+    updateRecipientSubscription(recipient: Optional<Recipient>) {
+        if (recipient == null) {
+            this.conversion = []
+            this.subscribeMessageService.unsubscribe();
+            return
+        }
+        this.getConversionService
+            .get(recipient.recipientId, recipient.recipientType)
+            .subscribe(res => this.conversion = res);
+        this.subscribeMessageService.subscribe(
+            recipient.recipientId,
+            recipient.recipientType,
+            res => {
+                this.conversion = res
+            });
+    }
 
-  @Input()
-  set recipientType(value: RecipientType) {
-    this._recipientType = value;
-    this.updateRecipientSubscription();
-  }
+    sendMsg() {
+        const content = this.msg.value ?? "";
+        if(this.recipient == null) return
+        this.sendMessageService.send({
+            recipientId: this.recipient.recipientId,
+            recipientType: this.recipient.recipientType,
+            sendAt: new Date(),
+            content,
+        });
+    }
 
-  updateRecipientSubscription(){
-    if(this._recipientId == null || this._recipientType == null) return;
-    this.getConversionService
-      .get(this._recipientId, this._recipientType)
-      .subscribe(res => this.conversion = res);
-  }
+    handleContainFocusIn() {
+        this.readMsgList()
+    }
 
-  sendMsg(){
-    const content = this.msg.value ?? "";
-    this.sendMessageService.send({
-      recipientId: this.recipientId ?? -1,
-      recipientType: this.recipientType ?? "USER",
-      sendAt: new Date(),
-      content,
-    });
-  }
-
-
+    readMsgList(){
+        const now = new Date();
+        console.log("conversion.component.handleContainFocusIn()")
+        const msgIds = this.conversion
+            .filter(msg => msg.readAt == null && msg.senderUsername !== this.authService.authedUser?.username && this.authService?.authedUser != null)
+            .map(msg => msg.id)
+        if(msgIds.length > 0)
+            this.readMessageStompService.readMessage({messageIds: msgIds, readTime: now})
+    }
 }

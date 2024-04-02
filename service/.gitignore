@@ -1,10 +1,15 @@
-HELP.md
-.gradle
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-
+.temp/
+.idea/
+wrapper/
+native/
+jdks/
+caches/
+daemon/
 ### STS ###
 .apt_generated
 .classpath

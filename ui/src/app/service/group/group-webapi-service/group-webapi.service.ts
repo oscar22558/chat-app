@@ -19,4 +19,14 @@ export class GroupWebapiService {
     const route = `${this.route}/${groupId}`
     return this.http.delete(route)
   }
+
+  acceptGroupInvitation(groupId: number): Observable<any> {
+      const route = `${this.route}/${groupId}/invitation`
+      return this.http.post(route, {})
+  }
+
+  rejectGroupInvitation(groupId: number): Observable<any> {
+      const route = `${this.route}/${groupId}/invitation`
+      return this.http.delete(route)
+  }
 }

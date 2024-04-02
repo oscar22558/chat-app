@@ -21,7 +21,7 @@ export class GroupCreateDialogComponent {
     private snackBar: MatSnackBar
   ) { }
 
-  onCreateGroupClick(){
+  onFormSubmit(){
     const form = this.newGroupFrom.value
     const request: GroupCreateRequest = {
       name: form.name ?? "",

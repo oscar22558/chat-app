@@ -1,6 +1,6 @@
 package com.example.chatapp.features.friend.model;
 
-import com.example.chatapp.common.mapper.ModelMapper;
+import com.example.chatapp.common.mapper.DTOConverter;
 import com.example.chatapp.db.entity.Friend;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 
 @Component
-public class InvitationViewMapper implements ModelMapper<Friend, InvitationView> {
+public class InvitationViewMapper implements DTOConverter<Friend, InvitationView> {
     @Setter
     Long authedUserId;
 
