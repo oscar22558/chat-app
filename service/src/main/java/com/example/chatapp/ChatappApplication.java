@@ -12,7 +12,7 @@ public class ChatappApplication {
         SpringApplication.run(ChatappApplication.class, args);
     }
     @Bean
-    public CommandLineRunner init(InitializeDB initializeDB) {
-        return initializeDB.getRunner();
+    public CommandLineRunner init(DataSeed dataSeed) {
+        return dataSeed.getRunner();
     }
 }

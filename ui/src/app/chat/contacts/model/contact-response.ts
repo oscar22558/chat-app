@@ -6,4 +6,5 @@ export type ContactResponse = {
   recipientType: RecipientType;
   recipientName: string;
   updatedAt: string;
+  newMsgCount: number;
 }[]

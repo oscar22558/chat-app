@@ -1,11 +1,9 @@
 package com.example.chatapp;
 
 import com.example.chatapp.common.AppTimestamp;
-import com.example.chatapp.db.entity.AppUser;
-import com.example.chatapp.db.entity.Friend;
-import com.example.chatapp.db.entity.FriendStatus;
-import com.example.chatapp.db.entity.Role;
+import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
+import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.db.repo.FriendJpaRepo;
 import com.example.chatapp.db.repo.RoleJpaRepo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,12 +22,13 @@ import java.util.Set;
 
 @Component
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class InitializeDB {
+public class DataSeed {
     final AppUserJpaRepo userJpaRepo;
     final RoleJpaRepo roleJpaRepo;
     final FriendJpaRepo friendJpaRepo;
     final PasswordEncoder passwordEncoder;
     final ObjectMapper objectMapper;
+    final ContactJpaRepo contactJpaRepo;
 
     @Value("classpath:data/testing-data.json")
     Resource resourceFile;
@@ -39,13 +38,16 @@ public class InitializeDB {
         Role role;
         List<AppUser> users;
         List<List<String>> friendPairs;
+        List<List<String>> contacts;
     }
-    public InitializeDB(AppUserJpaRepo userJpaRepo, RoleJpaRepo roleJpaRepo, FriendJpaRepo friendJpaRepo, PasswordEncoder passwordEncoder, ObjectMapper objectMapper) {
+
+    public DataSeed(AppUserJpaRepo userJpaRepo, RoleJpaRepo roleJpaRepo, FriendJpaRepo friendJpaRepo, PasswordEncoder passwordEncoder, ObjectMapper objectMapper, ContactJpaRepo contactJpaRepo) {
         this.userJpaRepo = userJpaRepo;
         this.roleJpaRepo = roleJpaRepo;
         this.friendJpaRepo = friendJpaRepo;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = objectMapper;
+        this.contactJpaRepo = contactJpaRepo;
     }
 
     public CommandLineRunner getRunner(){
@@ -81,13 +83,34 @@ public class InitializeDB {
                         user.getSentFriendRequests().add(friend);
                         target.getReceivedFriendRequests().add(friend);
                     });
+
+            jsonData.getContacts()
+                    .forEach(contact -> {
+                        var sender = findUserByUsername(savedUsers, contact.get(0));
+                        var recipient = findUserByUsername(savedUsers, contact.get(1));
+                        var senderContact = buildContact(sender, recipient);
+                        var recipientContact = buildContact(recipient, sender);
+                        contactJpaRepo.save(senderContact);
+                        contactJpaRepo.save(recipientContact);
+                    });
         };
     }
 
-    private AppUser findUserByUsername(List<AppUser> users, String username){
-        return users.stream()
+    private AppUser findUserByUsername(List<AppUser> savedUsers, String username){
+        return savedUsers.stream()
                 .filter(savedUser -> savedUser.getUsername().equals(username))
                 .findFirst()
                 .orElseThrow(InvalidParameterException::new);
     }
+
+    private Contact buildContact(AppUser sender, AppUser recipient){
+        var contact = new Contact();
+        contact.setNewMsgCount(0);
+        contact.setUpdatedAt(AppTimestamp.newInstance());
+        contact.setRecipientId(recipient.getId());
+        contact.setRecipientType(RecipientType.USER);
+        contact.setUser(sender);
+        return contact;
+    }
+
 }

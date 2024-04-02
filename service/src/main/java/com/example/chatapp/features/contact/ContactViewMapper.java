@@ -38,7 +38,8 @@ public class ContactViewMapper implements ModelMapper<Contact, ContactView> {
         }
 
         var updatedAt = input.getUpdatedAt();
-        return new ContactView(userId, recipientId, recipientType, recipientName, updatedAt);
+        var newMsgCount = input.getNewMsgCount();
+        return new ContactView(userId, recipientId, recipientType, recipientName, updatedAt, newMsgCount);
     }
 
     @Override

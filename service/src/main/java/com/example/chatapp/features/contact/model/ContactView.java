@@ -19,4 +19,5 @@ public class ContactView {
     RecipientType recipientType;
     String recipientName;
     Timestamp updatedAt;
+    int newMsgCount;
 }

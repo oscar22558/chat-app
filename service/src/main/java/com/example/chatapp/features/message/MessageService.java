@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -44,12 +46,10 @@ public class MessageService {
 
         var payload = getConversion(recipientId, recipientType);
         getUsersToNotify(recipientId, recipientType)
-                .stream()
-                .map(user ->{
+                .forEach(user ->{
+                    messagingTemplate.convertAndSendToUser(user.getUsername(), destination, payload);
                     contactService.pushNewMsgNotification(authedUser, user);
-                    return user.getUsername();
-                })
-                .forEach(username -> messagingTemplate.convertAndSendToUser(username, destination, payload));
+                });
     }
 
     public List<MessageView> getConversion(long receiverId, RecipientType recipientType){
