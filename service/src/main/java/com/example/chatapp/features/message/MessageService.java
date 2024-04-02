@@ -31,7 +31,8 @@ public class MessageService {
     UserIdentityService userIdentityService;
     ContactService contactService;
     MessageStatusTransaction messageStatusTransaction;
-    String destination = "/queue/msg";
+    ChatDestinationBuilder chatDestinationBuilder;
+    Logger logger = LoggerFactory.getLogger(MessageService.class);
     @Transactional
     public void acceptMsg(String msg, Timestamp sendAt, long recipientId, RecipientType recipientType) {
         var authedUser = userIdentityService.getUser();
@@ -44,12 +45,7 @@ public class MessageService {
         msgEntity.setStatus(messageStatusTransaction.sent());
         messageJpaRepo.save(msgEntity);
 
-        var payload = getConversion(recipientId, recipientType);
-        getUsersToNotify(recipientId, recipientType)
-                .forEach(user ->{
-                    messagingTemplate.convertAndSendToUser(user.getUsername(), destination, payload);
-                    contactService.pushNewMsgNotification(authedUser, user);
-                });
+        notifyUsers(authedUser, recipientId, recipientType);
     }
 
     public List<MessageView> getConversion(long receiverId, RecipientType recipientType){
@@ -131,5 +127,24 @@ public class MessageService {
         }
 
         return users;
+    }
+
+    private void notifyUsers(AppUser sender, long recipientId, RecipientType recipientType){
+        var payload = getConversion(recipientId, recipientType);
+        var usersInChat = getUsersToNotify(recipientId, recipientType);
+        if(recipientType == RecipientType.USER){
+            String senderDestination = chatDestinationBuilder.build(usersInChat.get(1).getId(), recipientType);
+            String senderUsername = usersInChat.get(0).getUsername();
+            String recipientDestination = chatDestinationBuilder.build(usersInChat.get(0).getId(), recipientType);
+            String recipientUsername = usersInChat.get(1).getUsername();
+            messagingTemplate.convertAndSendToUser(senderUsername, senderDestination, payload);
+            messagingTemplate.convertAndSendToUser(recipientUsername, recipientDestination, payload);
+        }else{
+            String groupDestination = chatDestinationBuilder.build(recipientId, recipientType);
+            usersInChat.forEach(user -> messagingTemplate.convertAndSendToUser(user.getUsername(), groupDestination, payload));
+        }
+        usersInChat.forEach(user -> {
+            contactService.pushNewMsgNotification(sender, user);
+        });
     }
 }

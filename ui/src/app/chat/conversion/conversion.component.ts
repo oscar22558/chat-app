@@ -17,8 +17,8 @@ import {SendMessageStompService} from "../../service/conversion/send-message-sto
   providers: [SubscribeMessageStompService]
 })
 export class ConversionComponent implements OnInit, OnDestroy{
-  private _recipientId?: number
-  private _recipientType?: RecipientType
+  private _recipientId: number = -1
+  private _recipientType: RecipientType = "USER"
 
   msg = new FormControl("")
   conversion: Conversion = []
@@ -29,14 +29,7 @@ export class ConversionComponent implements OnInit, OnDestroy{
   ) { }
 
   ngOnInit() {
-    if(this._recipientId != null && this._recipientType){
-      this.service
-        .get(this._recipientId, this._recipientType)
-        .subscribe(res => this.conversion = res)
-      this.subscribeMessageService.subscribe(res => {
-        this.conversion = res
-      });
-    }
+    this.updateRecipientSubscription()
   }
 
 
@@ -44,7 +37,7 @@ export class ConversionComponent implements OnInit, OnDestroy{
     this.subscribeMessageService.unsubscribe();
   }
 
-  get recipientId(): number | undefined {
+  get recipientId(): number {
     return this._recipientId;
   }
 
@@ -54,7 +47,7 @@ export class ConversionComponent implements OnInit, OnDestroy{
     this.updateRecipientSubscription();
   }
 
-  get recipientType(): RecipientType | undefined {
+  get recipientType(): RecipientType {
     return this._recipientType;
   }
 
@@ -65,10 +58,20 @@ export class ConversionComponent implements OnInit, OnDestroy{
   }
 
   updateRecipientSubscription(){
-    if(this._recipientId == null || this._recipientType == null) return;
+    if(this._recipientId == -1){
+      this.conversion = []
+      this.subscribeMessageService.unsubscribe();
+      return
+    }
     this.getConversionService
       .get(this._recipientId, this._recipientType)
       .subscribe(res => this.conversion = res);
+    this.subscribeMessageService.subscribe(
+      this._recipientId,
+      this._recipientType,
+        res => {
+      this.conversion = res
+    });
   }
 
   sendMsg(){
@@ -80,6 +83,4 @@ export class ConversionComponent implements OnInit, OnDestroy{
       content,
     });
   }
-
-
 }
