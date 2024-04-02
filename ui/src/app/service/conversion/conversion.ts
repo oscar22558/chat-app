@@ -4,4 +4,5 @@ export type Conversion = {
   content: string,
   sentAt: string,
   readAt: string,
+  status: 'SENT' | 'READ',
 }[]

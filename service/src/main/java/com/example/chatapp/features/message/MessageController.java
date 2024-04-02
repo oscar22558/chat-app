@@ -27,6 +27,11 @@ public class MessageController {
         );
     }
 
+    @MessageMapping("/msg/read")
+    public void readMsg(ReadMessageRequest request){
+        messageService.readNewMsg(request.getMessageId(), request.getReadTime());
+    }
+
     @ResponseBody
     @GetMapping("/api/chat/conversion")
     public List<MessageView> getConversion(@RequestParam Long recipientId, @RequestParam RecipientType recipientType){

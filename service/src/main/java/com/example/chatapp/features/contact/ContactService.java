@@ -1,20 +1,18 @@
 package com.example.chatapp.features.contact;
 
 import com.example.chatapp.common.AppTimestamp;
+import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.db.entity.AppUser;
 import com.example.chatapp.db.entity.Contact;
 import com.example.chatapp.db.entity.Group;
 import com.example.chatapp.db.entity.RecipientType;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.ContactJpaRepo;
-import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.features.contact.model.ContactView;
 import com.example.chatapp.features.user.UserIdentityService;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -80,5 +78,46 @@ public class ContactService {
             user.getContacts().remove(contact);
             contactJpaRepo.delete(contact);
         });
+    }
+
+    public void markNewMsgAsRead(AppUser sender, AppUser recipient){
+        if(sender.getId().equals(recipient.getId())) return;
+
+        var recipientContact = getContact(sender, recipient);
+        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() - 1);
+        contactJpaRepo.save(recipientContact);
+        contactUpdatePushService.push(recipient);
+    }
+
+    public void markNewMsgAsRead(AppUser sender, Group recipient){
+        var recipientContact = getContact(sender, recipient);
+        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() - 1);
+        contactJpaRepo.save(recipientContact);
+        contactUpdatePushService.push(sender);
+    }
+
+    public void pushNewMsgNotification(AppUser sender, AppUser recipient){
+        if(sender.getId().equals(recipient.getId())) return;
+
+        var recipientContact = getContact(sender, recipient);
+        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() + 1);
+        contactJpaRepo.save(recipientContact);
+        contactUpdatePushService.push(recipient);
+    }
+
+    private Contact getContact(AppUser sender, AppUser recipient){
+        return recipient.getContacts().stream()
+                .filter(contact -> contact.getRecipientId().equals(sender.getId())
+                        && contact.getRecipientType() == RecipientType.USER
+                ).findFirst()
+                .orElseThrow(RecordNotFoundException::new);
+    }
+
+    private Contact getContact(AppUser sender, Group recipient){
+        return sender.getContacts().stream()
+                .filter(contact -> contact.getRecipientId().equals(recipient.getId())
+                        && contact.getRecipientType() == RecipientType.GROUP
+                ).findFirst()
+                .orElseThrow(RecordNotFoundException::new);
     }
 }

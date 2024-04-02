@@ -20,6 +20,9 @@ public class Contact {
     Timestamp updatedAt;
 
     @Column(nullable = false)
+    int newMsgCount;
+
+    @Column(nullable = false)
     Long recipientId;
 
     @Column(nullable = false)

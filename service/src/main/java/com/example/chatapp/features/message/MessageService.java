@@ -5,6 +5,7 @@ import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.db.repo.MessageJpaRepo;
+import com.example.chatapp.features.contact.ContactService;
 import com.example.chatapp.features.user.UserIdentityService;
 import com.google.common.collect.Lists;
 import jakarta.transaction.Transactional;
@@ -26,26 +27,29 @@ public class MessageService {
     GroupJpaRepo groupJpaRepo;
     SimpMessagingTemplate messagingTemplate;
     UserIdentityService userIdentityService;
+    ContactService contactService;
+    MessageStatusTransaction messageStatusTransaction;
     String destination = "/queue/msg";
     @Transactional
     public void acceptMsg(String msg, Timestamp sendAt, long recipientId, RecipientType recipientType) {
         var authedUser = userIdentityService.getUser();
-        // save to db
         var msgEntity = new Message();
         msgEntity.setContent(msg);
         msgEntity.setSender(authedUser);
         msgEntity.setRecipientType(recipientType);
         msgEntity.setRecipientId(recipientId);
         msgEntity.setSendAt(sendAt);
-        msgEntity.setStatus(MessageStatus.SENT);
+        msgEntity.setStatus(messageStatusTransaction.sent());
         messageJpaRepo.save(msgEntity);
-        //generate payload
+
         var payload = getConversion(recipientId, recipientType);
-        // push to sender + other users
         getUsersToNotify(recipientId, recipientType)
-                .forEach(username ->
-                    messagingTemplate.convertAndSendToUser(username, destination, payload)
-                );
+                .stream()
+                .map(user ->{
+                    contactService.pushNewMsgNotification(authedUser, user);
+                    return user.getUsername();
+                })
+                .forEach(username -> messagingTemplate.convertAndSendToUser(username, destination, payload));
     }
 
     public List<MessageView> getConversion(long receiverId, RecipientType recipientType){
@@ -78,32 +82,54 @@ public class MessageService {
                         msg.getSender().getUsername(),
                         msg.getContent(),
                         msg.getSendAt(),
-                        msg.getReadAt()
+                        msg.getReadAt(),
+                        msg.getStatus()
                 )).toList();
     }
 
-    private List<String> getUsersToNotify(long recipientId, RecipientType recipientType){
-        var userId = userIdentityService.getUser().getId();
-        var username = appUserJpaRepo.findById(userId)
-                .orElseThrow(RecordNotFoundException::new).getUsername();
-        var usernames = Lists.newArrayList(username);
+    public void readNewMsg(long msgId, Timestamp readTime){
+        var authedUser = userIdentityService.getUser();
+        var msg = messageJpaRepo.findById(msgId)
+                        .orElseThrow(RecordNotFoundException::new);
+        var newStatus = messageStatusTransaction.read(msg.getStatus());
+        long receiverId = msg.getRecipientId();
+        RecipientType recipientType = msg.getRecipientType();
+        msg.setReadAt(readTime);
+        msg.setStatus(newStatus);
+        messageJpaRepo.save(msg);
 
         if(recipientType == RecipientType.USER){
-            var recipientUsername = appUserJpaRepo.findById(recipientId)
-                    .orElseThrow(RecordNotFoundException::new).getUsername();
-            usernames.add(recipientUsername);
+            var group = groupJpaRepo.findById(receiverId)
+                    .orElseThrow(RecordNotFoundException::new);
+            contactService.markNewMsgAsRead(authedUser, group);
         }else{
-            var otherUsernames = groupJpaRepo
+            var recipient = appUserJpaRepo.findById(receiverId)
+                    .orElseThrow(RecordNotFoundException::new);
+            contactService.markNewMsgAsRead(authedUser, recipient);
+        }
+    }
+
+    private List<AppUser> getUsersToNotify(long recipientId, RecipientType recipientType){
+        var userId = userIdentityService.getUser().getId();
+        var user = appUserJpaRepo.findById(userId)
+                .orElseThrow(RecordNotFoundException::new);
+        var users = Lists.newArrayList(user);
+
+        if(recipientType == RecipientType.USER){
+            var recipient = appUserJpaRepo.findById(recipientId)
+                    .orElseThrow(RecordNotFoundException::new);
+            users.add(recipient);
+        }else{
+            var otherUsers = groupJpaRepo
                     .findById(recipientId)
                     .orElseThrow(RecordNotFoundException::new)
                     .getMembers()
                     .stream()
                     .map(Member::getUser)
-                    .map(AppUser::getUsername)
                     .toList();
-            usernames.addAll(otherUsernames);
+            users.addAll(otherUsers);
         }
 
-        return usernames;
+        return users;
     }
 }
