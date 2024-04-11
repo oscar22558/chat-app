@@ -102,8 +102,7 @@ public class GroupMemberService {
             newContact.setUser(user);
             newContact.setUpdatedAt(AppTimestamp.newInstance());
             memberContacts.add(newContact);
-            contactJpaRepo.save(newContact);
-            //TODO: update contact subscription of newMember
+            contactService.addContact(member.getUser(), group);
         });
     }
 
