@@ -1,6 +1,5 @@
 package com.example.chatapp.features.group;
 
-import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
@@ -88,17 +87,7 @@ public class GroupMemberService {
         groupJpaRepo.save(group);
         memberJpaRepo.saveAll(newMembers);
 
-        newMembers.forEach(member -> {
-            var user = member.getUser();
-            var memberContacts = user.getContacts();
-            var newContact = new Contact();
-            newContact.setRecipientId(groupId);
-            newContact.setRecipientType(RecipientType.GROUP);
-            newContact.setUser(user);
-            newContact.setUpdatedAt(AppTimestamp.newInstance());
-            memberContacts.add(newContact);
-            contactService.addContact(member.getUser(), group);
-        });
+        newMembers.forEach(member -> contactService.addContact(member.getUser(), group));
     }
 
     public void removeMember(long groupId, long userId){

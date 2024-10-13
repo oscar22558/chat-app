@@ -3,15 +3,19 @@ package com.example.chatapp;
 import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.db.entity.*;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
-import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.db.repo.FriendJpaRepo;
 import com.example.chatapp.db.repo.RoleJpaRepo;
+import com.example.chatapp.redis.ContactRedisRepo;
+import com.example.chatapp.redis.entity.Contact;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +32,10 @@ public class DataSeed {
     final FriendJpaRepo friendJpaRepo;
     final PasswordEncoder passwordEncoder;
     final ObjectMapper objectMapper;
-    final ContactJpaRepo contactJpaRepo;
+    final ContactRedisRepo contactRedisRepo;
+    final RedisTemplate<String, Object> redisTemplate;
+
+    final Logger logger = LoggerFactory.getLogger(DataSeed.class);
 
     @Value("classpath:data/testing-data.json")
     Resource resourceFile;
@@ -41,17 +48,19 @@ public class DataSeed {
         List<List<String>> contacts;
     }
 
-    public DataSeed(AppUserJpaRepo userJpaRepo, RoleJpaRepo roleJpaRepo, FriendJpaRepo friendJpaRepo, PasswordEncoder passwordEncoder, ObjectMapper objectMapper, ContactJpaRepo contactJpaRepo) {
+    public DataSeed(AppUserJpaRepo userJpaRepo, RoleJpaRepo roleJpaRepo, FriendJpaRepo friendJpaRepo, PasswordEncoder passwordEncoder, ObjectMapper objectMapper, ContactRedisRepo contactRedisRepo, RedisTemplate<String, Object> redisTemplate) {
         this.userJpaRepo = userJpaRepo;
         this.roleJpaRepo = roleJpaRepo;
         this.friendJpaRepo = friendJpaRepo;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = objectMapper;
-        this.contactJpaRepo = contactJpaRepo;
+        this.contactRedisRepo = contactRedisRepo;
+        this.redisTemplate = redisTemplate;
     }
 
     public CommandLineRunner getRunner(){
         return (args) -> {
+            contactRedisRepo.deleteAll();
             var jsonData = objectMapper.readValue(resourceFile.getFile(), JsonData.class);
             var role = jsonData.getRole();
             var savedRole = roleJpaRepo.save(role);
@@ -59,7 +68,6 @@ public class DataSeed {
                 user.setPassword(passwordEncoder.encode(user.getPassword()));
                 user.setRoles(Set.of(savedRole));
                 user.setCreateAt(AppTimestamp.newInstance());
-                user.setContacts(new ArrayList<>());
                 user.setGroupMembers(new ArrayList<>());
                 user.setSentMessages(new ArrayList<>());
                 user.setReceivedFriendRequests(new ArrayList<>());
@@ -90,12 +98,10 @@ public class DataSeed {
                         var recipient = findUserByUsername(savedUsers, username.get(1));
                         var senderContact = buildContact(sender, recipient);
                         var recipientContact = buildContact(recipient, sender);
-                        sender.getContacts().add(senderContact);
-                        recipient.getContacts().add(recipientContact);
-
-                        contactJpaRepo.save(senderContact);
-                        contactJpaRepo.save(recipientContact);
+                        contactRedisRepo.save(senderContact);
+                        contactRedisRepo.save(recipientContact);
                     });
+
         };
     }
 
@@ -112,7 +118,7 @@ public class DataSeed {
         contact.setUpdatedAt(AppTimestamp.newInstance());
         contact.setRecipientId(recipient.getId());
         contact.setRecipientType(RecipientType.USER);
-        contact.setUser(sender);
+        contact.setUserId(sender.getId());
         return contact;
     }
 

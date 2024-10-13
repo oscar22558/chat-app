@@ -1,6 +1,7 @@
 package com.example.chatapp.features.contact;
 
 import com.example.chatapp.db.entity.AppUser;
+import com.example.chatapp.redis.ContactRedisRepo;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -14,10 +15,11 @@ import org.springframework.stereotype.Service;
 public class ContactUpdatePushService {
 
     SimpMessagingTemplate messagingTemplate;
+    ContactRedisRepo contactRedisRepo;
     ContactViewMapper mapper;
 
     public void push(AppUser user){
-        var contacts = user.getContacts();
+        var contacts = contactRedisRepo.findAllByUserId(user.getId());
         var username = user.getUsername();
         var payload = mapper.map(contacts);
 

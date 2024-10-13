@@ -2,11 +2,11 @@ package com.example.chatapp.features.contact;
 
 import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.common.mapper.ModelMapper;
-import com.example.chatapp.db.entity.Contact;
 import com.example.chatapp.db.entity.RecipientType;
 import com.example.chatapp.db.repo.AppUserJpaRepo;
 import com.example.chatapp.db.repo.GroupJpaRepo;
 import com.example.chatapp.features.contact.model.ContactView;
+import com.example.chatapp.redis.entity.Contact;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,7 +22,7 @@ public class ContactViewMapper implements ModelMapper<Contact, ContactView> {
 
     @Override
     public ContactView map(Contact input) {
-        var userId = input.getUser().getId();
+        var userId = input.getUserId();
         var recipientId = input.getRecipientId();
         var recipientType = input.getRecipientType();
 

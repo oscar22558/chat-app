@@ -3,19 +3,19 @@ package com.example.chatapp.features.contact;
 import com.example.chatapp.common.AppTimestamp;
 import com.example.chatapp.common.exception.RecordNotFoundException;
 import com.example.chatapp.db.entity.AppUser;
-import com.example.chatapp.db.entity.Contact;
 import com.example.chatapp.db.entity.Group;
 import com.example.chatapp.db.entity.RecipientType;
-import com.example.chatapp.db.repo.AppUserJpaRepo;
-import com.example.chatapp.db.repo.ContactJpaRepo;
 import com.example.chatapp.features.contact.model.ContactView;
 import com.example.chatapp.features.user.UserIdentityService;
-import jakarta.transaction.Transactional;
+import com.example.chatapp.redis.ContactRedisRepo;
+import com.example.chatapp.redis.entity.Contact;
+import com.example.chatapp.redis.entity.ContactKeyBuilder;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,103 +26,113 @@ import java.util.List;
 public class ContactService {
     UserIdentityService userIdentityService;
     ContactViewMapper mapper;
-    AppUserJpaRepo appUserJpaRepo;
-    ContactJpaRepo contactJpaRepo;
+    ContactRedisRepo contactRedisRepo;
+    RedisTemplate<String, Object> redisTemplate;
     ContactUpdatePushService contactUpdatePushService;
     Logger logger = LoggerFactory.getLogger(ContactService.class);
 
     public List<ContactView> getContact(){
         var authedUser = userIdentityService.getUser();
-        var contacts = authedUser.getContacts();
+        var contacts = contactRedisRepo.findAllByUserId(authedUser.getId());
         return mapper.map(contacts);
     }
 
     public void addContact(AppUser user, Group group){
-        var contacts = user.getContacts();
-        var newContact = new Contact();
-        newContact.setRecipientId(group.getId());
-        newContact.setRecipientType(RecipientType.GROUP);
-        newContact.setUpdatedAt(AppTimestamp.newInstance());
-        newContact.setUser(user);
-        var savedContact = contactJpaRepo.save(newContact);
+        var recipientId = group.getId();
+        var recipientType = RecipientType.GROUP;
+        if(isContactExist(user, group))
+            return;
 
-        contacts.add(savedContact);
-        appUserJpaRepo.save(user);
+        var newContact = new Contact();
+        newContact.setRecipientId(recipientId);
+        newContact.setRecipientType(recipientType);
+        newContact.setUpdatedAt(AppTimestamp.newInstance());
+        newContact.setUserId(user.getId());
+        contactRedisRepo.save(newContact);
         contactUpdatePushService.push(user);
     }
 
     public void addContact(AppUser user, AppUser recipient){
-        var userContact = new Contact();
-        userContact.setUpdatedAt(AppTimestamp.newInstance());
-        userContact.setRecipientId(recipient.getId());
-        userContact.setRecipientType(RecipientType.USER);
-        userContact.setUser(user);
-        user.getContacts().add(userContact);
-        contactJpaRepo.save(userContact);
+        if(!isContactExist(user, recipient)){
+            var userContact = new Contact();
+            userContact.setUpdatedAt(AppTimestamp.newInstance());
+            userContact.setRecipientId(recipient.getId());
+            userContact.setRecipientType(RecipientType.USER);
+            userContact.setUserId(user.getId());
+            contactRedisRepo.save(userContact);
+        }
 
-        var recipientContact = new Contact();
-        recipientContact.setUpdatedAt(AppTimestamp.newInstance());
-        recipientContact.setRecipientId(user.getId());
-        recipientContact.setRecipientType(RecipientType.USER);
-        recipientContact.setUser(recipient);
-        recipient.getContacts().add(recipientContact);
-        contactJpaRepo.save(recipientContact);
+        if(!isContactExist(recipient, user)){
+            var recipientContact = new Contact();
+            recipientContact.setUpdatedAt(AppTimestamp.newInstance());
+            recipientContact.setRecipientId(user.getId());
+            recipientContact.setRecipientType(RecipientType.USER);
+            recipientContact.setUserId(recipient.getId());
+            contactRedisRepo.save(recipientContact);
+        }
 
         contactUpdatePushService.push(user);
         contactUpdatePushService.push(recipient);
     }
 
     public void removeContact(AppUser user, Group group){
-        var groupContact = user.getContacts().stream()
-                .filter(contact -> contact.getRecipientId().equals(group.getId())
-                        && contact.getRecipientType() == RecipientType.GROUP
-                        )
-                .findFirst();
-        groupContact.ifPresent(contact -> {
-            user.getContacts().remove(contact);
-            contactJpaRepo.delete(contact);
-        });
+        contactRedisRepo.deleteAllByUserIdAndRecipientIdAndAndRecipientType(
+                user.getId(), group.getId(), RecipientType.GROUP
+        );
     }
 
     public void markNewMsgAsRead(AppUser sender, AppUser recipient){
         logger.info("markNewMsgAsRead: {}, {}", sender.getUsername(), recipient.getUsername());
         if(sender.getId().equals(recipient.getId())) return;
-
-        var recipientContact = getContact(sender, recipient);
-        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() - 1);
-        contactJpaRepo.save(recipientContact);
+        var contact = getContact(sender, recipient);
+        decreaseNewMessageCount(contact.getId());
         contactUpdatePushService.push(recipient);
     }
 
     public void markNewMsgAsRead(AppUser sender, Group recipient){
-        var recipientContact = getContact(sender, recipient);
-        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() - 1);
-        contactJpaRepo.save(recipientContact);
+        var contact = getContact(sender, recipient);
+        decreaseNewMessageCount(contact.getId());
         contactUpdatePushService.push(sender);
     }
 
     public void pushNewMsgNotification(AppUser sender, AppUser recipient){
         if(sender.getId().equals(recipient.getId())) return;
-
         var recipientContact = getContact(sender, recipient);
-        recipientContact.setNewMsgCount(recipientContact.getNewMsgCount() + 1);
-        contactJpaRepo.save(recipientContact);
+        increaseNewMessageCount(recipientContact.getId());
         contactUpdatePushService.push(recipient);
     }
 
     public Contact getContact(AppUser sender, AppUser recipient){
-        return recipient.getContacts().stream()
-                .filter(contact -> contact.getRecipientId().equals(sender.getId())
-                        && contact.getRecipientType() == RecipientType.USER
-                ).findFirst()
+        return contactRedisRepo
+                .findAllByUserIdAndRecipientIdAndAndRecipientType(sender.getId(), recipient.getId(), RecipientType.USER)
+                .stream()
+                .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
     }
 
     public Contact getContact(AppUser sender, Group recipient){
-        return sender.getContacts().stream()
-                .filter(contact -> contact.getRecipientId().equals(recipient.getId())
-                        && contact.getRecipientType() == RecipientType.GROUP
-                ).findFirst()
+        return  contactRedisRepo
+                .findAllByUserIdAndRecipientIdAndAndRecipientType(sender.getId(), recipient.getId(), RecipientType.GROUP)
+                .stream()
+                .findFirst()
                 .orElseThrow(RecordNotFoundException::new);
+    }
+
+    private boolean isContactExist(AppUser sender, AppUser recipient){
+        return contactRedisRepo.existsAllByUserIdAndRecipientIdAndAndRecipientType(sender.getId(), recipient.getId(), RecipientType.USER);
+    }
+
+    private boolean isContactExist(AppUser sender, Group group){
+        return contactRedisRepo.existsAllByUserIdAndRecipientIdAndAndRecipientType(sender.getId(), group.getId(), RecipientType.USER);
+    }
+
+    private void increaseNewMessageCount(String contactId){
+        var redisKey = ContactKeyBuilder.build(contactId);
+        redisTemplate.opsForHash().increment(redisKey, "newMsgCount", 1);
+    }
+
+    private void decreaseNewMessageCount(String contactId){
+        var redisKey = ContactKeyBuilder.build(contactId);
+        redisTemplate.opsForHash().increment(redisKey, "newMsgCount", -1);
     }
 }
