@@ -1,13 +1,43 @@
 <div class="border">
-  <div class="text-3xl font-semibold py-4"><span>Contacts</span></div>
-  <div class="bg-amber-400 mb-4" *ngFor="let contact of contacts">
-    <div><span>{{contact.recipientType}}</span></div>
-    <div (click)="onChatClick(contact.recipientId, contact.recipientType)" class="cursor-pointer"><span>{{contact.recipientName}}</span></div>
-    <div><span>{{contact.updatedAt}}</span></div>
-    <div *ngIf="contact.recipientType === 'GROUP'" class="py-2">
-      <button mat-stroked-button color="primary" (click)="onMemberListClick(contact.recipientId, contact.recipientName)">Members</button>
-      <button mat-stroked-button class="ml-12" color="primary" (click)="onInviteUsersClick(contact.recipientId, contact.recipientName)">Invite users + </button>
-      <button mat-stroked-button class="ml-4" color="warn" (click)="onGroupDeleteClick(contact.recipientId, contact.recipientName)">Delete Group x</button>
-    </div>
-  </div>
+    <div class="text-3xl font-semibold py-4"><span>Contacts</span></div>
+    <ng-container *ngFor="let contact of contacts">
+        <ng-container
+            *ngIf="contact.recipientType === RecipientType.USER || contact.recipientType === RecipientType.GROUP && contact.recipientGroup?.invitationStatus !== 'REJECTED'">
+            <div class="bg-amber-400 mb-4">
+                <div><span>{{ contact.recipientType }}</span></div>
+                <div (click)="onChatClick(contact.recipientId, contact.recipientType)" class="cursor-pointer">
+                    <span>{{ contact.recipientName }} {{ contact.msgCount - contact.readMsgCount }}</span></div>
+                <div><span>{{ contact.updatedAt }}</span></div>
+                <ng-container *ngIf="contact.recipientType === 'GROUP'">
+                    <div *ngIf="isAuthUserInGroupAdminList(contact.recipientGroup); else groupMemberActions"
+                         class="py-2">
+                        <button mat-stroked-button color="primary"
+                                (click)="onMemberListClick(contact.recipientId, contact.recipientName)">Members
+                        </button>
+                        <button mat-stroked-button class="ml-12" color="primary"
+                                (click)="onInviteUsersClick(contact.recipientId, contact.recipientName)">Invite users +
+                        </button>
+                        <button mat-stroked-button class="ml-4" color="warn"
+                                (click)="onGroupDeleteClick(contact.recipientId, contact.recipientName)">Delete Group x
+                        </button>
+                    </div>
+                    <ng-template #groupMemberActions>
+                        <ng-container
+                            *ngIf="contact.recipientGroup != null && contact.recipientGroup.invitationStatus === 'PENDING'">
+                            <div>
+                                <button mat-stroked-button class="ml-12" color="primary"
+                                        (click)="onAcceptGroupInvitationClick(contact.recipientGroup.id)">
+                                    Accept
+                                </button>
+                                <button mat-stroked-button class="ml-4" color="primary"
+                                        (click)="onRejectGroupInvitationClick(contact.recipientGroup.id)">
+                                    Ignore
+                                </button>
+                            </div>
+                        </ng-container>
+                    </ng-template>
+                </ng-container>
+            </div>
+        </ng-container>
+    </ng-container>
 </div>

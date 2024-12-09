@@ -12,6 +12,10 @@ export class AppComponent implements OnInit{
   constructor(private authService: AuthService, private router: Router) {
   }
 
+  get username(){
+      return this.authService.authedUser?.username ?? ""
+  }
+
   ngOnInit(): void {
     if(!this.authService.isAuthed()){
       this.redirectUserToSingInPage()

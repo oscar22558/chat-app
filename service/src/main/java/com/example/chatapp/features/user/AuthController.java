@@ -2,7 +2,7 @@ package com.example.chatapp.features.user;
 
 import com.example.chatapp.db.entity.AppUser;
 import com.example.chatapp.features.user.model.AuthRequest;
-import com.example.chatapp.features.user.model.UserView;
+import com.example.chatapp.features.user.model.UserDTO;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -36,7 +36,7 @@ public class AuthController {
 
 
     @GetMapping("/api/auth/user")
-    public ResponseEntity<UserView> user(){
+    public ResponseEntity<UserDTO> user(){
         AppUser user = userIdentityService.getUser();
         var view = userMapper.map(user);
         return ResponseEntity.ok(view);

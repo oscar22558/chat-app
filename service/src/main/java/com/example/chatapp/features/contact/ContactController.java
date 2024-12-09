@@ -1,6 +1,6 @@
 package com.example.chatapp.features.contact;
 
-import com.example.chatapp.features.contact.model.ContactView;
+import com.example.chatapp.model.ContactDTO;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -17,7 +17,7 @@ import java.util.List;
 public class ContactController {
     ContactService service;
     @GetMapping("/contact")
-    public List<ContactView> getContact(){
-        return service.getContact();
+    public List<ContactDTO> getContact(){
+        return service.getUserContact();
     }
 }

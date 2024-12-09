@@ -9,6 +9,7 @@ public class AppTimestamp extends Timestamp {
         super(time);
     }
 
+    //TODO: rename to now
     public static AppTimestamp newInstance(){
         var now = Calendar.getInstance().getTimeInMillis();
         return new AppTimestamp(now);

@@ -22,9 +22,20 @@
       "password": "123"
     }
   ],
-  "friend": ["user1", "user2"],
   "friendPairs": [
     ["user1", "user2"],
-    ["user1", "user3"]
-  ]
+    ["user1", "user3"],
+    ["user2", "user4"]
+  ],
+  "contacts": [
+    ["user1", "user2"],
+    ["user1", "user3"],
+    ["user2", "user4"]
+  ],
+    "groups": {
+      "group1": {
+        "ADMIN": ["user1"],
+        "MEMBER": ["user2", "user3"]
+      }
+    }
 }

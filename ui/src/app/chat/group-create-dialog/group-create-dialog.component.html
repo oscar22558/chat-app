@@ -1,10 +1,9 @@
 <div class="p-8">
-  <form [formGroup]="newGroupFrom">
+  <form [formGroup]="newGroupFrom" (ngSubmit)="onFormSubmit()">
     <mat-form-field>
       <mat-label>Group Name</mat-label>
       <input matInput placeholder="Group Name"  formControlName="name"/>
     </mat-form-field>
+    <button mat-raised-button type="submit">Create</button>
   </form>
-
-  <button mat-raised-button (click)="onCreateGroupClick()">Create</button>
 </div>

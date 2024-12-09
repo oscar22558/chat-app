@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component} from '@angular/core';
 import {FormControl, FormGroup} from "@angular/forms";
 import {RecipientType, RecipientTypeList} from "../contacts/model/recipient-type";
 import {Conversion} from "../../service/conversion/conversion";
@@ -14,7 +14,7 @@ export class ConversionDebugComponent {
   conversion: Conversion = []
   recipientFormVals = new FormGroup({
     id: new FormControl(0),
-    type: new FormControl<RecipientType>("USER")
+    type: new FormControl<RecipientType>(RecipientType.USER)
   })
 
   get recipientId(): number{
@@ -22,6 +22,6 @@ export class ConversionDebugComponent {
   }
 
   get recipientType(): RecipientType{
-    return this.recipientFormVals.value.type ?? "USER"
+    return this.recipientFormVals.value.type ?? RecipientType.USER
   }
 }

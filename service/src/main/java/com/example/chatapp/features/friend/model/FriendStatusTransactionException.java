@@ -1,7 +1,7 @@
 package com.example.chatapp.features.friend.model;
 
 public class FriendStatusTransactionException extends RuntimeException{
-    public static final String CODE = "UNAUTHORIZED";
+    public static final String CODE = "FRIEND_STATUS_TRANSACTION_EXCEPTION";
     public FriendStatusTransactionException(){
         this(CODE);
     }

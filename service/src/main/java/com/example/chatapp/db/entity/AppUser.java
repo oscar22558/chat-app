@@ -58,8 +58,6 @@ public class AppUser {
     )
     Set<Role> roles;
 
-    @OneToMany(mappedBy = "user")
-    List<Contact> contacts;
 
     public List<Friend> getFriends(){
         var friends = new ArrayList<Friend>();

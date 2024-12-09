@@ -67,7 +67,7 @@ export class InviteOtherUsersTabpageComponent {
 
   get invitationNotSentUsers(){
     return this.userSearchResult
-      .filter(result => result.invitationStatus == "")
+      .filter(result => result.invitationStatus === "")
   }
 
 }

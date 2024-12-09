@@ -1,4 +1,4 @@
-<form [formGroup]="authForm">
+<form [formGroup]="authForm" (ngSubmit)="signInClick()">
   <div>
     <span>Username:</span>
     <input style="margin-left: 2rem" formControlName="username"/>
@@ -8,7 +8,7 @@
     <input style="margin-left: 2rem" formControlName="password"/>
   </div>
   <div>
-    <button type="button" (click)="signInClick()">Sign-in</button>
+    <button type="submit">Sign-in</button>
   </div>
 </form>
 

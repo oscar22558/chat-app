@@ -1,1 +1,1 @@
-export type MemberInvitationStatus = "" | "PENDING" | "ACCEPTED"
+export type MemberInvitationStatus = "" | "REJECTED" | "PENDING" | "ACCEPTED"

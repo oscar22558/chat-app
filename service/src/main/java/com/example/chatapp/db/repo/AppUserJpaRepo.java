@@ -8,4 +8,5 @@ import java.util.List;
 public interface AppUserJpaRepo extends JpaRepository<AppUser, Long> {
     AppUser findAppUserByUsername(String username);
     List<AppUser> findAppUsersByUsernameContainsIgnoreCase(String username);
+    List<AppUser> findByIdIn(List<Long> ids);
 }
